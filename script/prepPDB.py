@@ -285,20 +285,21 @@ def make_stream_file(pdb_file, stream):
 #
 #-------------------------------------------------------------------------------
 def dump_stream_to_pdb(pdb_file, srcsrv, stream):
-#    tempfile = make_stream_file(pdb_file)  # For debugging
+    tempfile = make_stream_file(pdb_file, stream)
 
     make_backup_file(pdb_file, '.orig')
     pdbstr = os.path.join(srcsrv, 'pdbstr.exe')
     commando = f'{pdbstr} -w -s:srcsrv -p:{pdb_file} -i:{tempfile}'
     reply = run_process(commando, True)
 
+    os.remove(tempfile)                 # Or keep it for debugging
 
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
 def check_requirements(root, srcsrv):
     if not os.path.exists(srcsrv):
-        print(f'Sorry, the direcotry {srcsrv} does not exist')
+        print(f'Sorry, the directory {srcsrv} does not exist')
         return 3
     if not os.path.exists(root):
         print(f'Sorry, the pdb {root} does not exist')
