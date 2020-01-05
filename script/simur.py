@@ -5,7 +5,7 @@ import subprocess
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def run_process(command, do_check, extra_dir):
+def run_process(command, do_check, extra_dir=os.getcwd()):
     try:
         status = subprocess.run(command,
             stdout=subprocess.PIPE,

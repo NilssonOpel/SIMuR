@@ -15,25 +15,6 @@ def usage():
 
 
 #-------------------------------------------------------------------------------
-#
-#-------------------------------------------------------------------------------
-def run_process(command, do_check):
-    try:
-        status = subprocess.run(
-                command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                check=do_check)
-        if status.returncode == 0:
-            return status.stdout.decode('utf-8')
-    except:
-        return 'fatal'
-#        return f'{command} threw an exception'
-
-    return status.stdout.decode('utf-8')
-
-
-#-------------------------------------------------------------------------------
 # --- Routines for extracting the data from the pdb and associated vcs:s ---
 #-------------------------------------------------------------------------------
 
@@ -44,7 +25,7 @@ def is_indexed(root, srcsrv):
     pdbstr = os.path.join(srcsrv, 'pdbstr.exe')
     commando = f'{pdbstr} -r -p:{root} -s:srcsrv'
     # Looks like pdbstr return -1 if not indexed, and 0 if indexed (?)
-    reply = run_process(commando, False)
+    reply = simur.run_process(commando, False)
 
     # I will look at an empty reply as a test
     if len(reply):
@@ -58,7 +39,7 @@ def get_non_indexed(root, srcsrv):
     srctool = os.path.join(srcsrv, 'srctool.exe')
     commando = f'{srctool} -r {root}'
     # srctool returns the number of files - not an exit code
-    filestring = run_process(commando, False)
+    filestring = simur.run_process(commando, False)
     all_files = filestring.splitlines()
     files = []
     for file in all_files:
@@ -73,36 +54,45 @@ def get_non_indexed(root, srcsrv):
 #-------------------------------------------------------------------------------
 def is_in_svn(file, data):
     commando = f'svn info "{file}"'
-    reply = run_process(commando, True)
-    if len(reply) < 20:
+    reply = simur.run_process(commando, True)
+    if len(reply) < 2:
+        print(f'svn info returned: {reply}')
         return False
 
     lines = reply.splitlines()
+    hits = 0
     for line in lines:
 #        print(line)
         repo = re.match('^Repository Root: (.*)$', line)
         if repo:
             data['reporoot'] = repo.group(1)
+            hits += 1
             continue
         url = re.match('^URL: (.*)$', line)
         if url:
             data['url'] = url.group(1)
+            hits += 1
             continue
         rev = re.match('^Revision: (.*)$', line)
         if rev:
             data['revision'] = rev.group(1)
+            hits += 1
             continue
         rel = re.match('^Relative URL: \^/(.*)$', line)
         if rel:
             data['relpath']  = rel.group(1)
+            hits += 1
             continue
         sha1 = re.match('^Checksum: ([a-f0-9]+)$', line)
         if sha1:
             data['sha1']  = sha1.group(1)
+            hits += 1
             continue
 
-    data['vcs'] = 'svn'
+    if hits != 5:
+        return False
 
+    data['vcs'] = 'svn'
     return True
 
 #-------------------------------------------------------------------------------
@@ -140,7 +130,7 @@ def is_in_git(file, data):
     # ls-files cannot handle backward slashes!
 #    ufile = file.replace('\\','/')
     commando = f'git ls-files -s "{file}"'
-    reply = run_process(commando, True)
+    reply = simur.run_process(commando, True)
     if reply.startswith('fatal'):
         os.chdir(curr_dir)
         return False
@@ -160,7 +150,7 @@ def is_in_git(file, data):
 
     #Look for remote:s
     commando = 'git remote -v'
-    reply = run_process(commando, True)
+    reply = simur.run_process(commando, True)
     lines = reply.splitlines()
     for line in lines:
         remote = re.match('^origin\s*(.+)\s*\(fetch\)$', line)
@@ -294,12 +284,9 @@ def dump_stream_to_pdb(pdb_file, srcsrv, stream):
     make_backup_file(pdb_file, '.orig')
     pdbstr = os.path.join(srcsrv, 'pdbstr.exe')
     commando = f'{pdbstr} -w -s:srcsrv -p:{pdb_file} -i:{tempfile}'
-    reply = run_process(commando, True)
+    reply = simur.run_process(commando, True)
 
     os.remove(tempfile)                 # Or keep it for debugging
-
-
-
 
 #-------------------------------------------------------------------------------
 #
@@ -377,11 +364,11 @@ def main():
         print("Too few arguments")
         usage()
         exit(3)
-
+    debug = 0
     root = sys.argv[1]
     srcsrv = sys.argv[2]
 
-    outcome = do_the_job(root, srcsrv)
+    outcome = do_the_job(root, srcsrv, debug)
     return outcome
 
 #-------------------------------------------------------------------------------
