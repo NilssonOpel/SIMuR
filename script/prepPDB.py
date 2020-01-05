@@ -2,6 +2,7 @@ from datetime import datetime
 import os
 import re
 import shutil
+import simur
 import subprocess
 import sys
 
@@ -297,6 +298,25 @@ def dump_stream_to_pdb(pdb_file, srcsrv, stream):
 
     os.remove(tempfile)                 # Or keep it for debugging
 
+
+
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
+def update_presoak_file(vcs_data):
+    data = simur.load_presoak_data()
+
+    for file in vcs_data:
+        what = vcs_data[file]
+        if what['vcs'] == 'git':
+            remote = what['remote']
+            if remote:
+                if not remote in data:
+                    data[remote] = 'presoak'
+
+    simur.store_presoak_data(data)
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -342,6 +362,7 @@ def do_the_job(root, srcsrv, debug=0):
         if debug > 3:
             dump_stream_data(stream)
         dump_stream_to_pdb(root, srcsrv, stream)
+        update_presoak_file(vcs_data)
     if debug > 3:
         print('prepPDB END')
 
