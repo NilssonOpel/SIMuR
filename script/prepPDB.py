@@ -127,8 +127,6 @@ def is_in_git(file, data):
     curr_dir = os.getcwd()
     os.chdir(git_dir)
 
-    # ls-files cannot handle backward slashes!
-#    ufile = file.replace('\\','/')
     commando = f'git ls-files -s "{file}"'
     reply = simur.run_process(commando, True)
     if reply.startswith('fatal'):
