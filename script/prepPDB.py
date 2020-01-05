@@ -18,8 +18,11 @@ def usage():
 #-------------------------------------------------------------------------------
 def run_process(command, do_check):
     try:
-        status = subprocess.run(command, stdout=subprocess.PIPE, check=do_check)
-#        status = subprocess.run(command, check=True)
+        status = subprocess.run(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=do_check)
         if status.returncode == 0:
             return status.stdout.decode('utf-8')
     except:
@@ -53,7 +56,7 @@ def is_indexed(root, srcsrv):
 def get_non_indexed(root, srcsrv):
     srctool = os.path.join(srcsrv, 'srctool.exe')
     commando = f'{srctool} -r {root}'
-    # srctool returns a number of files - not an exit code
+    # srctool returns the number of files - not an exit code
     filestring = run_process(commando, False)
     all_files = filestring.splitlines()
     files = []
@@ -306,9 +309,44 @@ def check_requirements(root, srcsrv):
         return 3
     if is_indexed(root, srcsrv):
         print(f'Sorry, {root} is already indexed')
-        return 3
+        return 1
 
     return 0
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
+def do_the_job(root, srcsrv, debug=0):
+    failing_requirements = check_requirements(root, srcsrv)
+    if failing_requirements:
+        return failing_requirements
+
+    if debug > 3:
+        print('prepPDB START')
+
+    files = get_non_indexed(root, srcsrv)
+    if not files:
+        print(f'No files to index in {root}')
+        return 0
+    if debug > 3:
+        print(files)
+
+    vcs_data = get_vcs_information(files)
+    if not vcs_data:
+        print(f'No version controlled files in {root}')
+    else:
+        if debug > 3:
+            dump_vcsdata(vcs_data)
+
+        stream = init_the_stream_text(vcs_data)
+        if debug > 3:
+            dump_stream_data(stream)
+        dump_stream_to_pdb(root, srcsrv, stream)
+    if debug > 3:
+        print('prepPDB END')
+
+    return 0
+
 
 #-------------------------------------------------------------------------------
 #
@@ -322,23 +360,11 @@ def main():
     root = sys.argv[1]
     srcsrv = sys.argv[2]
 
-    failing_requirements = check_requirements(root, srcsrv)
-    if failing_requirements:
-        return failing_requirements
-
-    files = get_non_indexed(root, srcsrv)
-    vcs_data = get_vcs_information(files)
-    dump_vcsdata(vcs_data)
-
-    stream = init_the_stream_text(vcs_data)
-    dump_stream_data(stream)
-    dump_stream_to_pdb(root, srcsrv, stream)
-#    print(files)
-    print('END')
-    return 0
-
+    outcome = do_the_job(root, srcsrv)
+    return outcome
 
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-sys.exit(main())
+if __name__ == "__main__":
+    sys.exit(main())
