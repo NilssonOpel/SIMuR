@@ -32,9 +32,16 @@ cmake --build %BUILD_DIR% --config RelWithDebInfo
 
 :: Source index the .pdb
 python ..\script\prepPDB.py %BUILD_DIR%\RelWithDebInfo\TestGitCat.pdb C:\WinKits\10\Debuggers\x64\srcsrv
-
+if ERRORLEVEL 1 goto FAIL
 :: Invalidate the source path
 move %ROOT% hidden_%ROOT%
 
 :: Provoke the crash
 %BUILD_DIR%\RelWithDebInfo\TestGitCat.exe
+goto NORMAL
+
+:FAIL
+echo Failed!
+goto EOF
+:NORMAL
+echo Success!
