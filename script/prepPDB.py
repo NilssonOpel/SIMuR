@@ -305,12 +305,21 @@ def update_presoak_file(vcs_data):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def check_requirements(root, srcsrv):
+def check_paths(root, srcsrv):
     if not os.path.exists(srcsrv):
-        print(f'Sorry, the directory {srcsrv} does not exist')
+        print(f'Sorry, the WinKits directory {srcsrv} does not exist')
         return 3
     if not os.path.exists(root):
         print(f'Sorry, the pdb {root} does not exist')
+        return 3
+
+    return 0
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
+def check_requirements(root, srcsrv):
+    if check_paths(root, srcsrv):
         return 3
     if is_indexed(root, srcsrv):
         print(f'Sorry, {root} is already indexed')
