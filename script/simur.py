@@ -51,9 +51,17 @@ def get_local_cache_dir():
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def get_presoak_file():
+def get_local_cache_file(name):
     local_repo = get_local_cache_dir()
-    presoak_file = os.path.join(local_repo, 'presoak.json')
+    local_file = os.path.join(local_repo, name)
+
+    return local_file
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
+def get_presoak_file():
+    presoak_file = get_local_cache_file('presoak.json')
 
     return presoak_file
 
