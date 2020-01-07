@@ -1,10 +1,12 @@
 from datetime import datetime
 import os
+from pathlib import Path
 import re
 import shutil
 import simur
 import subprocess
 import sys
+import urllib
 
 #-------------------------------------------------------------------------------
 #
@@ -31,6 +33,30 @@ def is_indexed(root, srcsrv):
     if len(reply):
         return True
     return False
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
+def split_url(url):
+#    print(f'url: {url}')
+    #https://tools.ietf.org/pdf/rfc3986.pdf
+    parsed = urllib.parse.urlparse(url)
+    reporoot = f'{parsed.scheme}://'
+    if parsed.username:
+        reporoot += f'{parsed.username}@'
+        if parsed.password:
+            reporoot += parsed.password
+    reporoot += parsed.netloc
+    if parsed.port:
+        reporoot += f':{parsed.port}'
+
+    relpath = parsed.path
+
+#    print(f'     {reporoot}')
+#    print(f'     {relpath}')
+
+    return reporoot, relpath
+
 
 #-------------------------------------------------------------------------------
 #
@@ -63,24 +89,16 @@ def is_in_svn(file, data):
     hits = 0
     for line in lines:
 #        print(line)
-        repo = re.match('^Repository Root: (.*)$', line)
-        if repo:
-            data['reporoot'] = repo.group(1)
-            hits += 1
-            continue
         url = re.match('^URL: (.*)$', line)
         if url:
-            data['url'] = url.group(1)
+            root, rel = split_url(url.group(1))
+            data['reporoot'] = root
+            data['relpath']  = rel
             hits += 1
             continue
         rev = re.match('^Revision: (.*)$', line)
         if rev:
             data['revision'] = rev.group(1)
-            hits += 1
-            continue
-        rel = re.match('^Relative URL: \^/(.*)$', line)
-        if rel:
-            data['relpath']  = rel.group(1)
             hits += 1
             continue
         sha1 = re.match('^Checksum: ([a-f0-9]+)$', line)
@@ -89,7 +107,7 @@ def is_in_svn(file, data):
             hits += 1
             continue
 
-    if hits != 5:
+    if hits != 3:
         return False
 
     data['vcs'] = 'svn'
@@ -120,6 +138,9 @@ def get_git_dir(path):
 #
 #-------------------------------------------------------------------------------
 def is_in_git(file, data):
+    report_fail = lambda dir, command: \
+        f'When executing in directory: {dir}\n>{command} failed'
+
     git_dir = get_git_dir(file)
     if git_dir == None:
         return False
@@ -127,9 +148,15 @@ def is_in_git(file, data):
     curr_dir = os.getcwd()
     os.chdir(git_dir)
 
-    commando = f'git ls-files -s "{file}"'
+    # srctool may return in all lower case and that is not OK with git
+    as_on_disk = Path(file).resolve()
+    commando = f'git ls-files -s "{as_on_disk}"'
     reply = simur.run_process(commando, True)
+    if len(reply) == 0:
+        os.chdir(curr_dir)
+        return False
     if reply.startswith('fatal'):
+        report_fail(curr_dir, commando)
         os.chdir(curr_dir)
         return False
     reply = reply.rstrip()
@@ -141,17 +168,18 @@ def is_in_git(file, data):
         data['reporoot'] = git_dir
         data['local']    = git_dir
     else:
+        print(report_fail(git_dir, commando))
         print(f'When executing in directory: {git_dir}')
         print(f'>{commando} failed')
-#        os.chdir(curr_dir) stay at the fail
-        exit(3)
+        os.chdir(curr_dir)
+        return False
 
     #Look for remote:s
     commando = 'git remote -v'
     reply = simur.run_process(commando, True)
     lines = reply.splitlines()
     for line in lines:
-        remote = re.match('^origin\s*(.+)\s*\(fetch\)$', line)
+        remote = re.match('^origin\s*(.+)\s+\(fetch\)$', line)
         if remote:
             data['reporoot'] = remote.group(1)
             data['remote']   = remote.group(1)
@@ -235,7 +263,7 @@ def init_the_stream_text(vcs_information):
     # fnfile - extract filename (basename)
     # targ   - is the temp dir where the debugger roots its contents
     stream.append('VCGET_TARGET=' +
-        '%targ%\\%var5%\\%fnbksl%(%var4%)')
+        '%targ%\\%fnbksl%(%var4%)\\%var5%\\%fnfile%(%var1%)')
     # How to build the command to extract file from source control
     stream.append('VCGET_COMMAND=' +
         'cmd /c vcget.cmd %var2% "%var3%" "%var4%" %var5% > "%vcget_target%"')
@@ -329,6 +357,9 @@ def check_paths(root, srcsrv):
     if not os.path.exists(root):
         print(f'Sorry, the pdb {root} does not exist')
         return 3
+    if not os.path.isfile(root):
+        print(f'Sorry, {root} is not a file')
+        return 3
 
     return 0
 
@@ -339,7 +370,10 @@ def check_requirements(root, srcsrv):
     if check_paths(root, srcsrv):
         return 3
     if is_indexed(root, srcsrv):
-        print(f'Sorry, {root} is already indexed')
+        print(f'Sorry, {root} is already indexed or has no debug information')
+        ext = Path(root).suffix
+        if ext != '.pdb':
+            print(f'  (debug information usually has extension .pdb, not {ext})')
         return 1
 
     return 0

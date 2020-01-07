@@ -112,7 +112,7 @@ def find_and_update_git(local_repo, reporoot):
     else:
         command = f'git clone {reporoot}'
         reply = run_process(command, True, local_repo)
-        git_dir = get_the_git_dir()
+        git_dir = get_the_git_dir(local_repo, '.git')
 
     # Update the dictionary of reporoot and the sha1 so we can have a 'presoak'
     # that updates all the current repos off-line.  It can be tedious if vcget
@@ -121,7 +121,7 @@ def find_and_update_git(local_repo, reporoot):
 
     if presoak[reporoot] == 'presoak':
         presoak[reporoot] = local_repo
-        simur.store_presoak_data(presoak)
+        store_presoak_data(presoak)
     else:
         if presoak[reporoot] != local_repo:
             print(f'internal_error presoaking for {reporoot}')
