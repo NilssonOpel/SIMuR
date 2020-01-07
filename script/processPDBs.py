@@ -28,9 +28,6 @@ def main():
     srcsrv = 'C:/WinKits/10/Debuggers/x64/srcsrv'
     if len(sys.argv) > 2:
         srcsrv = sys.argv[2]
-    if prepPDB.check_paths(root, srcsrv):
-        return 3
-
 
     pdbs = list_all_files(root, ".pdb")
 
