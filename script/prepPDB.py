@@ -189,6 +189,23 @@ def dump_vcsdata(vcs_information):
         for key in what:
             print(f'  {key} : {what[key]}')
 
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
+def report_vcsdata(vcs_information):
+    vcses = {}
+    for file in vcs_information:
+        what = vcs_information[file]
+        vcs = what['vcs']
+        if vcs in vcses:
+            vcses[vcs] += 1
+        else:
+            vcses[vcs] = 1
+
+    for key in vcses:
+        print(f'Found {vcses[key]} files using {key}')
+
+    return vcses
 
 #-------------------------------------------------------------------------------
 # --- Routines for inserting the data into the pdb ---
@@ -342,6 +359,9 @@ def do_the_job(root, srcsrv, debug=0):
     if not files:
         print(f'No files to index in {root}')
         return 0
+    else:
+        print(f'Found {len(files)} source files')
+
     if debug > 3:
         print(files)
 
@@ -357,6 +377,7 @@ def do_the_job(root, srcsrv, debug=0):
             dump_stream_data(stream)
         dump_stream_to_pdb(root, srcsrv, stream)
         update_presoak_file(vcs_data)
+        report_vcsdata(vcs_data)
     if debug > 3:
         print('prepPDB END')
 
