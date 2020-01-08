@@ -68,7 +68,6 @@ def handle_remote_git(reporoot, revision):
 def handle_git(reporoot, revision):
     if os.path.exists(reporoot):
         reply = handle_local_git(reporoot, revision)
-
     else:
         reply = handle_remote_git(reporoot, revision)
 
@@ -100,7 +99,6 @@ def main():
     print(reply, end='')
 
     return 0
-
 
 #-------------------------------------------------------------------------------
 #
