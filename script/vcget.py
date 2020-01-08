@@ -65,7 +65,7 @@ def handle_remote_git(reporoot, revision):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def handle_git(reporoot, relpath, revision):
+def handle_git(reporoot, revision):
     if os.path.exists(reporoot):
         reply = handle_local_git(reporoot, revision)
 
@@ -91,7 +91,7 @@ def main():
     if vcs == 'svn':
         reply = handle_svn(reporoot, relpath, revision)
     elif vcs == 'git':
-        reply = handle_git(reporoot, relpath, revision)
+        reply = handle_git(reporoot, revision)
     else:
         print(f'(Cannot handle {vcs}')
         usage()

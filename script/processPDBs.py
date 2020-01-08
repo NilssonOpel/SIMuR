@@ -1,5 +1,6 @@
 import os
 import prepPDB
+import simur
 import sys
 
 #-------------------------------------------------------------------------------
@@ -34,7 +35,7 @@ def main():
         usage()
         exit(3)
     root = sys.argv[1]
-    srcsrv = 'C:/WinKits/10/Debuggers/x64/srcsrv'
+    srcsrv = 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\srcsrv'
     if len(sys.argv) > 2:
         srcsrv = sys.argv[2]
     if not os.path.exists(root):
@@ -47,10 +48,14 @@ def main():
         return 3
 
     outcome = 0
+    cache_file = os.path.join(root, 'vcs_cache.json')
+    vcs_cache = simur.load_json_data(cache_file)
+
     for pdb in pdbs:
         print(f'---\nProcessing {pdb}')
-        outcome += prepPDB.do_the_job(pdb, srcsrv, debug_level)
+        outcome += prepPDB.do_the_job(pdb, srcsrv, vcs_cache, debug_level)
         print(f'---\n')
+    simur.store_json_data(cache_file, vcs_cache)
 
     return outcome
 

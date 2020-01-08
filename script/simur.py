@@ -78,11 +78,10 @@ def get_presoak_file():
 #
 #-------------------------------------------------------------------------------
 def load_json_data(file):
-    presoak_file = get_presoak_file()
     if not os.path.exists(file):
         return {}
 
-    with open(presoak_file) as fp:
+    with open(file) as fp:
         data = json.load(fp)
 
     return data
@@ -91,7 +90,6 @@ def load_json_data(file):
 #
 #-------------------------------------------------------------------------------
 def store_json_data(file, data):
-    presoak_file = get_presoak_file()
     with open(file, 'w') as fp:
         json.dump(data, fp, indent=2)
 
@@ -126,11 +124,11 @@ def find_and_update_git(local_repo, reporoot):
     # Update the dictionary of reporoot and the sha1 so we can have a 'presoak'
     # that updates all the current repos off-line.  It can be tedious if vcget
     # should do all the clone:ing and pull:ing while a debugger is running
-    presoak = load_presoak_data()
-
+    presoak_file = get_presoak_file()
+    presoak = load_json_data(presoak_file)
     if presoak[reporoot] == 'presoak':
         presoak[reporoot] = local_repo
-        store_presoak_data(presoak)
+        store_json_data(presoak_file, presoak)
     else:
         if presoak[reporoot] != local_repo:
             print(f'internal_error presoaking for {reporoot}')

@@ -15,7 +15,6 @@ def usage():
     print(f'{sys.argv[0]} pdb-file srcsrv-dir')
     print(f'  e.g. {sys.argv[0]} RelWithDebInfo\TestGitCat.pdb C:\WinKits\10\Debuggers\x64\srcsrv')
 
-
 #-------------------------------------------------------------------------------
 # --- Routines for extracting the data from the pdb and associated vcs:s ---
 #-------------------------------------------------------------------------------
@@ -51,12 +50,7 @@ def split_url(url):
         reporoot += f':{parsed.port}'
 
     relpath = parsed.path
-
-#    print(f'     {reporoot}')
-#    print(f'     {relpath}')
-
     return reporoot, relpath
-
 
 #-------------------------------------------------------------------------------
 #
@@ -194,26 +188,28 @@ def is_in_git(file, data):
 #-------------------------------------------------------------------------------
 def get_vcs_information(files, vcs_cache):
     data = {}
+    no_vcs = 'no-vcs'
+
     for file in files:
-        print(f'{file}')
-        if file in vcs_cache:
-            print(f'Found {file} in cache')
+        if file in vcs_cache.keys():
+            cached = vcs_cache[file]
+            if no_vcs in cached.keys():
+                continue
             data[file] = vcs_cache[file]
         else:
             response = {}
             if is_in_svn(file, response):
-                print(f'Is a SVN')
                 data[file] = response
                 vcs_cache[file] = response
                 continue
             if is_in_git(file, response):
-                print(f'Is a GIT')
                 data[file] = response
                 vcs_cache[file] = response
                 continue
+            response[no_vcs] = "true"
+            vcs_cache[file] = response
 
     return data
-
 
 #-------------------------------------------------------------------------------
 #
@@ -332,7 +328,11 @@ def make_stream_file(pdb_file, stream):
 #-------------------------------------------------------------------------------
 def dump_stream_to_pdb(pdb_file, srcsrv, stream):
     tempfile = make_stream_file(pdb_file, stream)
-
+# To restore the pdb:s
+# for %%I in (*.*.orig) do (
+#   del %%~nI
+#   ren %%I %%~nI
+# )
     make_backup_file(pdb_file, '.orig')
     pdbstr = os.path.join(srcsrv, 'pdbstr.exe')
     commando = f'{pdbstr} -w -s:srcsrv -p:{pdb_file} -i:{tempfile}'
@@ -391,7 +391,7 @@ def check_requirements(root, srcsrv):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def do_the_job(root, srcsrv, debug=0):
+def do_the_job(root, srcsrv, vcs_cache, debug=0):
     failing_requirements = check_requirements(root, srcsrv)
     if failing_requirements:
         return failing_requirements
@@ -411,10 +411,7 @@ def do_the_job(root, srcsrv, debug=0):
 
     root_dir = os.path.dirname(root)
 
-    cache_file = os.path.join(root_dir, 'vcs_cache.json')
-    vcs_cache = simur.load_json_data(cache_file)
     vcs_data = get_vcs_information(files, vcs_cache)
-    simur.store_json_data(cache_file, vcs_data)
     if not vcs_data:
         print(f'No version controlled files in {root}')
     else:
@@ -432,7 +429,6 @@ def do_the_job(root, srcsrv, debug=0):
 
     return 0
 
-
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -445,7 +441,8 @@ def main():
     root = sys.argv[1]
     srcsrv = sys.argv[2]
 
-    outcome = do_the_job(root, srcsrv, debug)
+    dummy_cache = {}
+    outcome = do_the_job(root, srcsrv, dummy_cache, debug)
     return outcome
 
 #-------------------------------------------------------------------------------
