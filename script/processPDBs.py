@@ -5,6 +5,15 @@ import sys
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
+def usage():
+    the_script = os.path.basename(sys.argv[0])
+    print(f'usage: {the_script} pdb-dir srcsrv-dir')
+    print(f'  e.g. {the_script} RelWithDebInfo C:\WinKits\10\Debuggers\x64\srcsrv')
+    print( '    process all the PDB:s in the pdb-dir and sub directories')
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
 def list_all_files(dir, ext):
     the_chosen_files = []
 
@@ -28,8 +37,14 @@ def main():
     srcsrv = 'C:/WinKits/10/Debuggers/x64/srcsrv'
     if len(sys.argv) > 2:
         srcsrv = sys.argv[2]
+    if not os.path.exists(root):
+        print(f'Sorry, the directory {root} does not exist')
+        return 3
 
     pdbs = list_all_files(root, ".pdb")
+    if len(pdbs) == 0:
+        print(f'No PDB:s fond in directory {root}')
+        return 3
 
     outcome = 0
     for pdb in pdbs:
