@@ -192,16 +192,25 @@ def is_in_git(file, data):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def get_vcs_information(files):
+def get_vcs_information(files, vcs_cache):
     data = {}
     for file in files:
-        response = {}
-        if is_in_svn(file, response):
-            data[file] = response
-            continue
-        if is_in_git(file, response):
-            data[file] = response
-            continue
+        print(f'{file}')
+        if file in vcs_cache:
+            print(f'Found {file} in cache')
+            data[file] = vcs_cache[file]
+        else:
+            response = {}
+            if is_in_svn(file, response):
+                print(f'Is a SVN')
+                data[file] = response
+                vcs_cache[file] = response
+                continue
+            if is_in_git(file, response):
+                print(f'Is a GIT')
+                data[file] = response
+                vcs_cache[file] = response
+                continue
 
     return data
 
@@ -335,7 +344,8 @@ def dump_stream_to_pdb(pdb_file, srcsrv, stream):
 #
 #-------------------------------------------------------------------------------
 def update_presoak_file(vcs_data):
-    data = simur.load_presoak_data()
+    presoak_file = simur.get_presoak_file()
+    data = simur.load_json_data(presoak_file)
 
     for file in vcs_data:
         what = vcs_data[file]
@@ -345,7 +355,7 @@ def update_presoak_file(vcs_data):
                 if not remote in data:
                     data[remote] = 'presoak'
 
-    simur.store_presoak_data(data)
+    simur.store_json_data(presoak_file, data)
 
 #-------------------------------------------------------------------------------
 #
@@ -399,7 +409,12 @@ def do_the_job(root, srcsrv, debug=0):
     if debug > 3:
         print(files)
 
-    vcs_data = get_vcs_information(files)
+    root_dir = os.path.dirname(root)
+
+    cache_file = os.path.join(root_dir, 'vcs_cache.json')
+    vcs_cache = simur.load_json_data(cache_file)
+    vcs_data = get_vcs_information(files, vcs_cache)
+    simur.store_json_data(cache_file, vcs_data)
     if not vcs_data:
         print(f'No version controlled files in {root}')
     else:

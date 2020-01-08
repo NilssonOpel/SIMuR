@@ -60,6 +60,15 @@ def get_local_cache_file(name):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
+def load_local_cache_file(name):
+    local_repo = get_local_cache_dir()
+    local_file = os.path.join(local_repo, name)
+
+    return local_file
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
 def get_presoak_file():
     presoak_file = get_local_cache_file('presoak.json')
 
@@ -68,9 +77,9 @@ def get_presoak_file():
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def load_presoak_data():
+def load_json_data(file):
     presoak_file = get_presoak_file()
-    if not os.path.exists(presoak_file):
+    if not os.path.exists(file):
         return {}
 
     with open(presoak_file) as fp:
@@ -81,10 +90,10 @@ def load_presoak_data():
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def store_presoak_data(data):
+def store_json_data(file, data):
     presoak_file = get_presoak_file()
-    with open(presoak_file, 'w') as fp:
-        json.dump(data, fp)
+    with open(file, 'w') as fp:
+        json.dump(data, fp, indent=2)
 
 #-------------------------------------------------------------------------------
 #
