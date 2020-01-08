@@ -42,6 +42,6 @@ goto NORMAL
 
 :FAIL
 echo Failed!
-goto EOF
+goto :EOF
 :NORMAL
 echo Success!
