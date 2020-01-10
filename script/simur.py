@@ -40,37 +40,33 @@ def my_mkdir(the_dir):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def get_local_cache_dir():
+def get_repo_cache_dir():
     # Take in the cache directory through an environment variable since vcget
     # may be called spontaneous from all kind of debugging tools
-    cache_dir = os.getenv('SIMUR_CACHE', 'C:\simur_repo')
-    local_repo = my_mkdir(cache_dir)
+    cache_dir = os.getenv('SIMUR_REPO_CACHE', 'C:\simur_repo')
+    canon_dir = os.path.realpath(cache_dir)
+    if not os.path.exists(canon_dir):
+        eprint(f'get_repo_cache_dir(): got {canon_dir}')
+        canon_dir = cache_dir
 
-    return local_repo
+    repo_cache = my_mkdir(canon_dir)
 
-#-------------------------------------------------------------------------------
-#
-#-------------------------------------------------------------------------------
-def get_local_cache_file(name):
-    local_repo = get_local_cache_dir()
-    local_file = os.path.join(local_repo, name)
-
-    return local_file
+    return repo_cache
 
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def load_local_cache_file(name):
-    local_repo = get_local_cache_dir()
-    local_file = os.path.join(local_repo, name)
+def get_repo_cache_file(name):
+    repo_cache = get_repo_cache_dir()
+    cache_file = os.path.join(repo_cache, name)
 
-    return local_file
+    return cache_file
 
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
 def get_presoak_file():
-    presoak_file = get_local_cache_file('presoak.json')
+    presoak_file = get_repo_cache_file('presoak.json')
 
     return presoak_file
 
@@ -78,11 +74,15 @@ def get_presoak_file():
 #
 #-------------------------------------------------------------------------------
 def load_json_data(file):
+    data = {}
     if not os.path.exists(file):
-        return {}
+        return data
 
     with open(file) as fp:
-        data = json.load(fp)
+        try:
+            data = json.load(fp)
+        except json.decoder.JSONDecodeError:
+            pass
 
     return data
 
@@ -126,12 +126,18 @@ def find_and_update_git(local_repo, reporoot):
     # should do all the clone:ing and pull:ing while a debugger is running
     presoak_file = get_presoak_file()
     presoak = load_json_data(presoak_file)
-    if presoak[reporoot] == 'presoak':
+    if not presoak:     # You may get an empty dictionary
+        if presoak[reporoot] == 'presoak':
+            presoak[reporoot] = local_repo
+            store_json_data(presoak_file, presoak)
+        else:
+            if presoak[reporoot] != local_repo:
+                eprint(f'internal_error presoaking for {reporoot}:')
+                eprint(f'  {presoak[reporoot]} vs {local_repo}')
+    else:  # Add if missing
+        eprint(f'{reporoot} missing {presoak_file}')
         presoak[reporoot] = local_repo
         store_json_data(presoak_file, presoak)
-    else:
-        if presoak[reporoot] != local_repo:
-            print(f'internal_error presoaking for {reporoot}')
 
     os.chdir(curr_dir)
 
