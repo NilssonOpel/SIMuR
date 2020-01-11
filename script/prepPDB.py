@@ -131,7 +131,7 @@ def get_git_dir(path):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def is_in_git(file, data):
+def was_in_git(file, data):
     report_fail = lambda dir, command: \
         f'When executing in directory: {dir}\n>{command} failed'
 
@@ -149,8 +149,64 @@ def is_in_git(file, data):
     if len(reply) == 0:
         os.chdir(curr_dir)
         return False
-    if reply.startswith('fatal'):
-        report_fail(curr_dir, commando)
+    if reply.startswith('fatal'): # fatal: not a git repository ...
+#        report_fail(curr_dir, commando)    so it is not a fail
+        os.chdir(curr_dir)
+        return False
+    reply = reply.rstrip()
+#    print(f'GIT: |{reply}|')
+    repo = re.match('^(\d+)\s*([a-fA-F0-9]+)\s*(\d+)\s*(.+)$', reply)
+    if repo:
+        data['revision'] = repo.group(2)
+        data['relpath']  = repo.group(4)
+        data['reporoot'] = git_dir
+        data['local']    = git_dir
+    else:
+        print(report_fail(git_dir, commando))
+        print(f'When executing in directory: {git_dir}')
+        print(f'>{commando} failed')
+        os.chdir(curr_dir)
+        return False
+
+    #Look for remote:s
+    commando = 'git remote -v'
+    reply = simur.run_process(commando, True)
+    lines = reply.splitlines()
+    for line in lines:
+        remote = re.match('^origin\s*(.+)\s+\(fetch\)$', line)
+        if remote:
+            data['reporoot'] = remote.group(1)
+            data['remote']   = remote.group(1)
+
+    data['vcs'] = 'git'
+
+    os.chdir(curr_dir)
+    return True
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
+def is_in_git(file, data):
+    report_fail = lambda dir, command: \
+        f'When executing in directory: {dir}\n>{command} failed'
+
+    dir = os.path.dirname(file)
+    git_dir = os.path.realpath(dir)
+    if git_dir == None:
+        return False
+    # Make a pushd to the git dir
+    curr_dir = os.getcwd()
+    os.chdir(git_dir)
+
+    # srctool may return in all lower case and that is not OK with git
+    as_on_disk = Path(file).resolve()
+    commando = f'git ls-files -s "{as_on_disk}"'
+    reply = simur.run_process(commando, False) # False since git may complain
+    if len(reply) == 0:                        # if it is not a repo
+        os.chdir(curr_dir)
+        return False
+    if reply.startswith('fatal'): # fatal: not a git repository ...
+#        report_fail(curr_dir, commando)    so it is not a fail
         os.chdir(curr_dir)
         return False
     reply = reply.rstrip()
@@ -428,6 +484,40 @@ def do_the_job(root, srcsrv, vcs_cache, debug=0):
         print('prepPDB END')
 
     return 0
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
+def verify_cache_data(vcs_cache):
+    # turned out to be cheaper to update than verify
+    new_data = {}
+    no_vcs = 'no-vcs'
+
+    files = vcs_cache.keys()
+    for file in files:
+        cached = vcs_cache[file]
+        if 'vcs' in cached.keys():
+            vcs_system = cached["vcs"]
+            if vcs_system == 'svn':
+                response = {}
+                if is_in_svn(file, response):
+                    new_data[file] = response
+                else:
+                    print(f'svn:{file} removed from cache')
+                continue
+            if vcs_system == 'git':
+                response = {}
+                if is_in_git(file, response):
+                    new_data[file] = response
+                else:
+                    print(f'git:{file} removed from cache')
+                continue
+            eprint(f'verify_cache_data: unhandled vcs {vcs_system}')
+            continue
+        # How to verify no-vcs cheaply ?
+        print(f'non-vcs:{file} removed from cache')
+
+    return new_data
 
 #-------------------------------------------------------------------------------
 #
