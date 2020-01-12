@@ -50,8 +50,8 @@ def main():
     outcome = 0
     cache_file = os.path.join(root, 'vcs_cache.json')
     vcs_cache = simur.load_json_data(cache_file)
-    # Verify the cache before using it! - actually update it
-    vcs_cache = prepPDB.verify_cache_data(vcs_cache)
+    # Should verify or update the cache before using it! - But it takes time
+    # vcs_cache = prepPDB.verify_cache_data(vcs_cache)
 
     for pdb in pdbs:
         print(f'---\nProcessing {pdb}')
