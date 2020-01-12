@@ -8,6 +8,10 @@ import subprocess
 import sys
 import urllib
 
+svn_cache = {}
+git_cache = {}
+
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -18,6 +22,31 @@ def usage():
 #-------------------------------------------------------------------------------
 # --- Routines for extracting the data from the pdb and associated vcs:s ---
 #-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
+def skip_file(file):
+    skipping_dirs = [
+        "c:\\program files",
+        "C:\\Program Files",
+    ]
+    dir_contains = [
+        "build",
+    ]
+
+    dir = os.path.dirname(file)
+    for skip_dir in skipping_dirs:
+        if dir.startswith(skip_dir):
+#            print(f'Skipping {file}')
+            return True
+
+    for skip_dir in dir_contains:
+        if skip_dir in dir:
+#            print(f'Skipping {file}')
+            return True
+
+    return False
 
 #-------------------------------------------------------------------------------
 #
@@ -72,7 +101,8 @@ def get_non_indexed(root, srcsrv):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def is_in_svn(file, data):
+def is_in_svn(file, data, cache):
+
     commando = f'svn info "{file}"'
     reply = simur.run_process(commando, True)
     if len(reply) < 2:
@@ -110,7 +140,7 @@ def is_in_svn(file, data):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def get_git_dir(path):
+def get_root_dir(path, ext):
     # Add a cache for those directories that are not git-ish
     # and also for those that are
     dir = os.path.dirname(path)
@@ -118,8 +148,8 @@ def get_git_dir(path):
     curr_dir = os.path.realpath(dir)
     while True:
 #        print(f'Looking at {curr_dir}')
-        a_git = os.path.join(curr_dir, '.git')
-        if os.path.exists(a_git):
+        a_root = os.path.join(curr_dir, ext)
+        if os.path.exists(a_root):
             break
         next_dir = os.path.split(curr_dir)[0]
         if next_dir == curr_dir:
@@ -131,54 +161,96 @@ def get_git_dir(path):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def was_in_git(file, data):
+def get_git_dir(path):
+    return get_root_dir(path, '.git')
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
+def copy_git_response(data, response):  # why do I need to do this ?
+    for key in response.keys():
+        data[key] = response[key]
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
+def is_in_git(file, data, git_cache):
     report_fail = lambda dir, command: \
         f'When executing in directory: {dir}\n>{command} failed'
+
+    # srctool may return in all lower case and that is not OK with git
+    as_on_disk = Path(file).resolve()
+    as_on_disk = str(as_on_disk)
 
     git_dir = get_git_dir(file)
     if git_dir == None:
         return False
+
+    for cached_dir in git_cache.keys():         # dict on git roots
+        if file.startswith(cached_dir):
+            git_content = git_cache[cached_dir] # dict on abs path file
+            if as_on_disk in git_content.keys():
+                copy_git_response(data, git_content[as_on_disk])
+                return True
+            else:
+                eprint(f'in cached directory {cached_dir}:')
+                eprint(f'  {as_on_disk} was not found')
+                return False
+
     # Make a pushd to the git dir
     curr_dir = os.getcwd()
     os.chdir(git_dir)
 
-    # srctool may return in all lower case and that is not OK with git
-    as_on_disk = Path(file).resolve()
-    commando = f'git ls-files -s "{as_on_disk}"'
-    reply = simur.run_process(commando, True)
-    if len(reply) == 0:
-        os.chdir(curr_dir)
-        return False
-    if reply.startswith('fatal'): # fatal: not a git repository ...
-#        report_fail(curr_dir, commando)    so it is not a fail
-        os.chdir(curr_dir)
-        return False
-    reply = reply.rstrip()
-#    print(f'GIT: |{reply}|')
-    repo = re.match('^(\d+)\s*([a-fA-F0-9]+)\s*(\d+)\s*(.+)$', reply)
-    if repo:
-        data['revision'] = repo.group(2)
-        data['relpath']  = repo.group(4)
-        data['reporoot'] = git_dir
-        data['local']    = git_dir
-    else:
-        print(report_fail(git_dir, commando))
-        print(f'When executing in directory: {git_dir}')
-        print(f'>{commando} failed')
-        os.chdir(curr_dir)
-        return False
-
     #Look for remote:s
     commando = 'git remote -v'
+    git_remote = 'none'
     reply = simur.run_process(commando, True)
     lines = reply.splitlines()
     for line in lines:
         remote = re.match('^origin\s*(.+)\s+\(fetch\)$', line)
         if remote:
-            data['reporoot'] = remote.group(1)
-            data['remote']   = remote.group(1)
+            git_remote = remote.group(1)
+        # No else - you cannot know it there is a remote
 
-    data['vcs'] = 'git'
+    # Get the contents of the repository
+    commando = 'git ls-files -s'
+    reply = simur.run_process(commando, True)
+    if len(reply) == 0:
+        os.chdir(curr_dir)
+        return False
+    if reply.startswith('fatal'): # fatal: not a git repository ...
+        os.chdir(curr_dir)         # so it is not a fail
+        return False
+
+    git_dir = str(git_dir)
+    git_cache[git_dir] = {}
+    dir_cache = git_cache[git_dir]
+    # Iterate on lines
+    for line in reply.splitlines():
+    # 100644 2520fa373ff004b2fd4f9fa3e285b0d7d36c9319 0       script/prepPDB.py
+        repo = re.match('^\d+\s*([a-fA-F0-9]+)\s*\d+\s*(.+)$', line)
+        if repo:
+            revision = repo.group(1)
+            rel_key  = repo.group(2)
+            # Make the key
+            key = os.path.join(git_dir, rel_key)
+            key = Path(key).resolve()
+            key = str(key)  # json cannot have WindowsPath as key
+            dir_cache[key] = {}
+            cache_entry = dir_cache[key]
+            cache_entry['revision'] = revision
+            cache_entry['relpath']  = rel_key
+            cache_entry['reporoot'] = git_remote
+            cache_entry['remote']   = git_remote
+            cache_entry['local']    = git_dir
+            cache_entry['vcs']      = 'git'
+        else:
+            print(report_fail(git_dir, commando))
+            print(f'When executing in directory: {git_dir}')
+            print(f'>{commando} failed')
+            os.chdir(curr_dir)
+            return False
+    copy_git_response(data, dir_cache[as_on_disk])
 
     os.chdir(curr_dir)
     return True
@@ -186,7 +258,7 @@ def was_in_git(file, data):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def is_in_git(file, data):
+def is_in_old_git(file, data, dummy):
     report_fail = lambda dir, command: \
         f'When executing in directory: {dir}\n>{command} failed'
 
@@ -235,6 +307,8 @@ def is_in_git(file, data):
             data['remote']   = remote.group(1)
 
     data['vcs'] = 'git'
+    for key in data.keys():
+        print(f'  olddata: {key} : {data[key]}')
 
     os.chdir(curr_dir)
     return True
@@ -247,24 +321,37 @@ def get_vcs_information(files, vcs_cache):
     no_vcs = 'no-vcs'
 
     for file in files:
+        if skip_file(file):
+            continue
         if file in vcs_cache.keys():
+            print(f'vcs_cache: {file}')
             cached = vcs_cache[file]
             if no_vcs in cached.keys():
                 continue
             data[file] = vcs_cache[file]
         else:
             response = {}
-            if is_in_svn(file, response):
+            if is_in_svn(file, response, svn_cache):
                 data[file] = response
                 vcs_cache[file] = response
                 continue
-            if is_in_git(file, response):
-                data[file] = response
-                vcs_cache[file] = response
+            if True:
+                if is_in_git(file, response, git_cache):
+                    key = Path(file).resolve()
+                    key = str(key)
+                    data[key] = response
+                    vcs_cache[file] = response
+            else:
+                if is_in_old_git(file, response, git_cache):
+                    data[file] = response
+                    vcs_cache[file] = response
+
                 continue
             response[no_vcs] = "true"
             vcs_cache[file] = response
 
+    git_file = 'git_cache.json'
+    simur.store_json_data(git_file, git_cache)
     return data
 
 #-------------------------------------------------------------------------------
@@ -275,7 +362,7 @@ def dump_vcsdata(vcs_information):
         print()
         print(file)
         what = vcs_information[file]
-        for key in what:
+        for key in what.keys():
             print(f'  {key} : {what[key]}')
 
 #-------------------------------------------------------------------------------
@@ -394,7 +481,7 @@ def dump_stream_to_pdb(pdb_file, srcsrv, stream):
     commando = f'{pdbstr} -w -s:srcsrv -p:{pdb_file} -i:{tempfile}'
     reply = simur.run_process(commando, True)
 
-    os.remove(tempfile)                 # Or keep it for debugging
+#    os.remove(tempfile)                 # Or keep it for debugging
 
 #-------------------------------------------------------------------------------
 #
@@ -447,14 +534,25 @@ def check_requirements(root, srcsrv):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
+def make_time_stamp(text, debug):
+    if not debug:
+        return
+    instant = datetime.today().strftime("%H:%M:%S:%f")
+    print(f'{instant}: {text}')
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
 def do_the_job(root, srcsrv, vcs_cache, debug=0):
     failing_requirements = check_requirements(root, srcsrv)
     if failing_requirements:
         return failing_requirements
 
+    make_time_stamp('prepPDB START', debug)
     if debug > 3:
         print('prepPDB START')
 
+    make_time_stamp('get_non_indexed', debug)
     files = get_non_indexed(root, srcsrv)
     if not files:
         print(f'No files to index in {root}')
@@ -463,25 +561,33 @@ def do_the_job(root, srcsrv, vcs_cache, debug=0):
         print(f'Found {len(files)} source files')
 
     if debug > 3:
-        print(files)
+        for file in files:
+            print(file)
 
     root_dir = os.path.dirname(root)
 
+    make_time_stamp('get_vcs_information', debug)
     vcs_data = get_vcs_information(files, vcs_cache)
     if not vcs_data:
         print(f'No version controlled files in {root}')
     else:
         if debug > 3:
+            make_time_stamp('dump_vcsdata', debug)
             dump_vcsdata(vcs_data)
 
+        make_time_stamp('init_the_stream_text', debug)
         stream = init_the_stream_text(vcs_data)
         if debug > 3:
             dump_stream_data(stream)
+        make_time_stamp('dump_stream_to_pdb', debug)
         dump_stream_to_pdb(root, srcsrv, stream)
+        make_time_stamp('update_presoak_file', debug)
         update_presoak_file(vcs_data)
+        make_time_stamp('report_vcsdata', debug)
         report_vcsdata(vcs_data)
     if debug > 3:
         print('prepPDB END')
+    make_time_stamp('prepPDB END', debug)
 
     return 0
 
@@ -533,6 +639,8 @@ def main():
 
     dummy_cache = {}
     outcome = do_the_job(root, srcsrv, dummy_cache, debug)
+    dummy_file = 'dummy.json'
+#    simur.store_json_data(dummy_file, dummy_cache)
     return outcome
 
 #-------------------------------------------------------------------------------
