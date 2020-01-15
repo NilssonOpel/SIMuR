@@ -46,7 +46,7 @@ def get_repo_cache_dir():
     cache_dir = os.getenv('SIMUR_REPO_CACHE', 'C:\simur_repo')
     canon_dir = os.path.realpath(cache_dir)
     if not os.path.exists(canon_dir):
-        eprint(f'get_repo_cache_dir(): got {canon_dir}')
+        print(f'get_repo_cache_dir(): got {canon_dir}')
         canon_dir = cache_dir
 
     repo_cache = my_mkdir(canon_dir)
@@ -132,10 +132,9 @@ def find_and_update_git(local_repo, reporoot):
             store_json_data(presoak_file, presoak)
         else:
             if presoak[reporoot] != local_repo:
-                eprint(f'internal_error presoaking for {reporoot}:')
-                eprint(f'  {presoak[reporoot]} vs {local_repo}')
+                print(f'internal_error presoaking for {reporoot}:')
+                print(f'  {presoak[reporoot]} vs {local_repo}')
     else:  # Add if missing
-        eprint(f'{reporoot} missing {presoak_file}')
         presoak[reporoot] = local_repo
         store_json_data(presoak_file, presoak)
 

@@ -53,9 +53,17 @@ def main():
     # Should verify or update the cache before using it! - But it takes time
     # vcs_cache = prepPDB.verify_cache_data(vcs_cache)
 
+    svn_cache = {}
+    git_cache = {}
+
     for pdb in pdbs:
         print(f'---\nProcessing {pdb}')
-        outcome += prepPDB.do_the_job(pdb, srcsrv, vcs_cache, debug_level)
+        outcome += prepPDB.do_the_job(pdb,
+            srcsrv,
+            vcs_cache,
+            svn_cache,
+            git_cache,
+            debug_level)
         print(f'---\n')
     simur.store_json_data(cache_file, vcs_cache)
 

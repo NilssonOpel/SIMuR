@@ -5,6 +5,7 @@ project(TestGitCat)
 set(Sources
   fromRiouxSVN/trunk/main.c
   fromRiouxSVN/trunk/success1.c
+  fromRiouxSVN/trunk/svn_subdir/success4.c
   fromGitHub/gitcat_test2/success2.c
   fromGitHub/gitcat_test1/success3.c
   fromGitHub/gitcat_test1/other.c

@@ -25,19 +25,22 @@ if exist %GIT2% (
 )
 popd
 
+set CONFIG=RelWithDebInfo
+set CONFIG=Debug
+
 :: Build the .exe with a .pdb
 copy CMakeLists.txt %ROOT%
 cmake %ROOT%\CMakelists.txt -B %BUILD_DIR%
-cmake --build %BUILD_DIR% --config RelWithDebInfo
+cmake --build %BUILD_DIR% --config %CONFIG%
 
 :: Source index the .pdb
-python ..\script\prepPDB.py %BUILD_DIR%\RelWithDebInfo\TestGitCat.pdb C:\WinKits\10\Debuggers\x64\srcsrv
+python ..\script\prepPDB.py %BUILD_DIR%\%CONFIG%\TestGitCat.pdb C:\WinKits\10\Debuggers\x64\srcsrv
 if ERRORLEVEL 1 goto FAIL
 :: Invalidate the source path
 move %ROOT% hidden_%ROOT%
 
 :: Provoke the crash
-%BUILD_DIR%\RelWithDebInfo\TestGitCat.exe
+%BUILD_DIR%\%CONFIG%\TestGitCat.exe
 goto NORMAL
 
 :FAIL
