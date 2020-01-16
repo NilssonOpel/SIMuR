@@ -34,12 +34,10 @@ def skip_file(file):
     dir = os.path.dirname(file)
     for skip_dir in skipping_dirs:
         if dir.startswith(skip_dir):
-#            print(f'Skipping {file}')
             return True
 
     for skip_dir in dir_contains:
         if skip_dir in dir:
-#            print(f'Skipping {file}')
             return True
 
     return False
@@ -107,11 +105,12 @@ def is_in_svn(file, data, svn_cache):
             svn_content = svn_cache[cached_dir] # dict on abs path file
             if as_on_disk in svn_content.keys():
                 copy_cache_response(data, svn_content[as_on_disk])
-                print(f'SVN-CACHE: {file}')
+#                print(f'SVN-CACHE: {file}')
                 return True
             else:
                 print(f'in cached directory {cached_dir}:')
                 print(f'  {as_on_disk} was not found')
+                dump_vcsdata(svn_cache)
                 return False
 
     svn_dir = get_root_dir(file, '.svn')
@@ -140,6 +139,7 @@ def is_in_svn(file, data, svn_cache):
     url_str = 'URL: '
     rev_str = 'Revision: '
     sha_str = 'Checksum: '
+    nod_str = 'Node Kind: '
     # In case of doubt: use brute force
     no_of_lines = len(lines)
     curr_line = 0
@@ -149,51 +149,59 @@ def is_in_svn(file, data, svn_cache):
     while curr_line < no_of_lines:
         line = lines[curr_line]
         if line.startswith(url_str):
-            print(f'REPOROOT: {line}')
-            url = line[len(url_str):]   # Get the reporoot
-#        print(f'SKIP: {line}')
+            url = line[len(url_str):]   # Get the repository root
+        curr_line += 1
         if len(line) == 0:
             break
-        curr_line += 1
 
     while curr_line < no_of_lines:
-        if hits >= 3:
-            # Make the key
-            if not url:
-                print(f"No url")
-            if not path:
-                print(f"No path")
-            if not rev:
-                print(f"No revh")
-            if not sha:
-                print(f"No sha")
-            if not (path and url and rev and sha): # DeMorgan or DeLorean
-                print("Something went wrong")
-                exit(347)
+        line = lines[curr_line]
+#        print(f'IN: {hits} {line}')
+        curr_line += 1
 
+        if hits >= 3 or curr_line >= no_of_lines or len(line) == 0:
+            # Make the key
+#            print(f'hits; {hits}')
+#            print(f'cnt ; {curr_line}:{no_of_lines}')
+#            print(f'len ; {len(line)}')
+#            if not url:
+#                print(f"No url")
+#            if not path:
+#                print(f"No path")
+#            if not rev:
+#                print(f"No revh")
+#            if not sha:
+#                print(f"No sha")
+            if not (path and url and rev and (sha or node_kind)): # DeLorean
+                print("Something went wrong")
+                node_kind = 'went_wrong'
             key = os.path.join(svn_dir, path)
             try:
                 key = Path(key).resolve()
             except:
                 print(f'cannot handle {path}')
                 hits = 0
-                continue
-            key = str(key)  # json cannot have WindowsPath as key
-            cache_entry = {}
-            cache_entry['relpath']  = os.path.relpath(path)
-            cache_entry['reporoot'] = url
-            cache_entry['revision'] = rev
-            cache_entry['sha1']  = sha
-            cache_entry['vcs'] = 'svn'
-            path = rev = sha = None
-            dir_cache[key] = cache_entry
+                node_kind = 'exception'
+
+            if node_kind == 'file':
+                key = str(key)  # json cannot have WindowsPath as key
+                cache_entry = {}
+                disk_rel = os.path.relpath(path)
+                url_rel = disk_rel.replace('\\', '/')   # since disk_rel is str
+#                url_rel  = disk_rel.as_posix()         # to get forward slashes
+                cache_entry['relpath']  = url_rel
+                cache_entry['reporoot'] = url
+                cache_entry['revision'] = rev
+                cache_entry['sha1']  = sha
+                cache_entry['vcs'] = 'svn'
+                dir_cache[key] = cache_entry
+#                print(f'Inserts: {key}')
+#            else:
+#                print(f'Skips: {node_kind} - {path}')
+
+            path = rev = sha = node_kind = None
             hits = 0
 
-        line = lines[curr_line]
-        print(f'IN: {line}')
-        curr_line += 1
-
-        ### Handle IN: 'Node Kind: directory' rather != file
         if line.startswith(path_str):
             path = line[len(path_str):]
             hits += 1
@@ -203,6 +211,8 @@ def is_in_svn(file, data, svn_cache):
         if line.startswith(sha_str):
             sha = line[len(sha_str):]
             hits += 1
+        if line.startswith(nod_str):
+            node_kind = line[len(nod_str):]
 
     copy_cache_response(data, dir_cache[as_on_disk])
     os.chdir(curr_dir)
@@ -590,7 +600,7 @@ def dump_stream_to_pdb(pdb_file, srcsrv, stream):
     commando = f'{pdbstr} -w -s:srcsrv -p:{pdb_file} -i:{tempfile}'
     reply = simur.run_process(commando, True)
 
-#    os.remove(tempfile)                 # Or keep it for debugging
+    os.remove(tempfile)                 # Or keep it for debugging
 
 #-------------------------------------------------------------------------------
 #
@@ -752,7 +762,7 @@ def main():
     svn_cache = {}
     git_cache = {}
     outcome = do_the_job(root, srcsrv, dummy_cache, svn_cache, git_cache, debug)
-    dummy_file = 'dummy.json'
+#    dummy_file = 'dummy.json'
 #    simur.store_json_data(dummy_file, dummy_cache)
     return outcome
 
