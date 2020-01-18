@@ -96,22 +96,14 @@ def get_non_indexed(root, srcsrv):
 #
 #-------------------------------------------------------------------------------
 def is_in_svn(file, data, svn_cache):
-    as_on_disk = Path(file).resolve()
-    as_on_disk = str(as_on_disk)
-
     for cached_dir in svn_cache.keys():         # dict on svn roots
-        if as_on_disk.startswith(cached_dir):
+        # Since svn may have externals this may fail if we have a narrower root
+        if file.startswith(cached_dir):
             descended_into_cache_dir = cached_dir
             svn_content = svn_cache[cached_dir] # dict on abs path file
-            if as_on_disk in svn_content.keys():
-                copy_cache_response(data, svn_content[as_on_disk])
-#                print(f'SVN-CACHE: {file}')
+            if file in svn_content.keys():
+                copy_cache_response(data, svn_content[file])
                 return True
-            else:
-                print(f'in cached directory {cached_dir}:')
-                print(f'  {as_on_disk} was not found')
-                dump_vcsdata(svn_cache)
-                return False
 
     svn_dir = get_root_dir(file, '.svn')
     if svn_dir == None:
@@ -121,6 +113,7 @@ def is_in_svn(file, data, svn_cache):
     curr_dir = os.getcwd()
     os.chdir(svn_dir)
 
+#    print(f'svn-caching: {svn_dir}')
     commando = f'svn info -R'
     reply = simur.run_process(commando, True)
     if len(reply) < 2:
@@ -154,6 +147,7 @@ def is_in_svn(file, data, svn_cache):
         if len(line) == 0:
             break
 
+    path = rev = sha = node_kind = None
     while curr_line < no_of_lines:
         line = lines[curr_line]
 #        print(f'IN: {hits} {line}')
@@ -173,7 +167,6 @@ def is_in_svn(file, data, svn_cache):
 #            if not sha:
 #                print(f"No sha")
             if not (path and url and rev and (sha or node_kind)): # DeLorean
-                print("Something went wrong")
                 node_kind = 'went_wrong'
             key = os.path.join(svn_dir, path)
             try:
@@ -189,8 +182,8 @@ def is_in_svn(file, data, svn_cache):
                 disk_rel = os.path.relpath(path)
                 url_rel = disk_rel.replace('\\', '/')   # since disk_rel is str
 #                url_rel  = disk_rel.as_posix()         # to get forward slashes
-                cache_entry['relpath']  = url_rel
                 cache_entry['reporoot'] = url
+                cache_entry['relpath']  = url_rel
                 cache_entry['revision'] = rev
                 cache_entry['sha1']  = sha
                 cache_entry['vcs'] = 'svn'
@@ -214,29 +207,47 @@ def is_in_svn(file, data, svn_cache):
         if line.startswith(nod_str):
             node_kind = line[len(nod_str):]
 
-    copy_cache_response(data, dir_cache[as_on_disk])
     os.chdir(curr_dir)
-    return True
+    # We may have looked in this directory but 'file' maybe isn't under VC
+    if file in dir_cache.keys():
+        copy_cache_response(data, dir_cache[file])
+        return True
+    return False
 
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
 def is_in_svn_raw(file, data, cache):
+    svn_dir = get_root_dir(file, '.svn')
+    if svn_dir == None:
+        return False
+
+    # Make a pushd to the svn dir
+    curr_dir = os.getcwd()
+    os.chdir(svn_dir)
+
+    commando = 'svn info --show-item url .'
+    reply = simur.run_process(commando, True)
+    reporoot = reply.strip()
+    disk_rel = os.path.relpath(file)
+    url_rel  = disk_rel.replace('\\', '/')
+
     commando = f'svn info "{file}"'
     reply = simur.run_process(commando, True)
     if len(reply) < 2:
         print(f'svn info returned: {reply}')
+        os.chdir(curr_dir)
         return False
 
     lines = reply.splitlines()
     hits = 0
     for line in lines:
 #        print(line)
-        url = re.match('^URL: (.*)$', line)
+        # Just check if we get an URL: but we ignore what it says
+        url = line.startswith('URL: ')
         if url:
-            root, rel = split_url(url.group(1))
-            data['reporoot'] = root
-            data['relpath']  = rel
+            data['reporoot'] = reporoot
+            data['relpath']  = url_rel
             hits += 1
             continue
         rev = re.match('^Revision: (.*)$', line)
@@ -244,12 +255,13 @@ def is_in_svn_raw(file, data, cache):
             data['revision'] = rev.group(1)
             hits += 1
             continue
-        sha1 = re.match('^Checksum: ([a-f0-9]+)$', line)
+        sha1 = re.match('^Checksum: ([a-fA-F0-9]+)$', line)
         if sha1:
             data['sha1']  = sha1.group(1)
             hits += 1
             continue
 
+    os.chdir(curr_dir)
     if hits != 3:
         return False
 
@@ -275,6 +287,7 @@ def get_root_dir(path, ext):
             return None
         curr_dir = next_dir
 
+    curr_dir = Path(curr_dir).resolve()
     return curr_dir
 
 #-------------------------------------------------------------------------------
@@ -297,20 +310,15 @@ def is_in_git(file, data, git_cache):
     report_fail = lambda dir, command: \
         f'When executing in directory: {dir}\n>{command} failed'
 
-    # srctool may return in all lower case and that is not OK with git
-    as_on_disk = Path(file).resolve()
-    as_on_disk = str(as_on_disk)
-
     for cached_dir in git_cache.keys():         # dict on git roots
-        if as_on_disk.startswith(cached_dir):
+        if file.startswith(cached_dir):
             git_content = git_cache[cached_dir] # dict on abs path file
-            if as_on_disk in git_content.keys():
-                copy_cache_response(data, git_content[as_on_disk])
+            if file in git_content.keys():
+                copy_cache_response(data, git_content[file])
                 return True
-            else:
-                print(f'in cached directory {cached_dir}:')
-                print(f'  {as_on_disk} was not found')
-                return False
+#            else:
+#                print(f'in cached directory {cached_dir}:')
+#                print(f'  {file} was not found')
 
     git_dir = get_git_dir(file)
     if git_dir == None:
@@ -319,6 +327,8 @@ def is_in_git(file, data, git_cache):
     # Make a pushd to the git dir
     curr_dir = os.getcwd()
     os.chdir(git_dir)
+
+#    print(f'git-caching: {git_dir}')
 
     #Look for remote:s
     commando = 'git remote -v'
@@ -356,16 +366,16 @@ def is_in_git(file, data, git_cache):
             try:
                 key = Path(key).resolve()
             except:
-                print(f'cannot handle {line}')
+#                print(f'cannot handle {line}')
                 continue
             key = str(key)  # json cannot have WindowsPath as key
             dir_cache[key] = {}
             cache_entry = dir_cache[key]
-            cache_entry['revision'] = revision
-            cache_entry['relpath']  = rel_key
             cache_entry['reporoot'] = git_remote
-            cache_entry['remote']   = git_remote
+            cache_entry['relpath']  = rel_key
+            cache_entry['revision'] = revision
             cache_entry['local']    = git_dir
+            cache_entry['remote']   = git_remote
             cache_entry['vcs']      = 'git'
         else:
             print(report_fail(git_dir, commando))
@@ -374,10 +384,13 @@ def is_in_git(file, data, git_cache):
             os.chdir(curr_dir)
             return False
 
-    copy_cache_response(data, dir_cache[as_on_disk])
-
     os.chdir(curr_dir)
-    return True
+    # We may have looked in this directory but 'file' maybe isn't under VC
+    if file in dir_cache.keys():
+        copy_cache_response(data, dir_cache[file])
+        return True
+
+    return False
 
 #-------------------------------------------------------------------------------
 #
@@ -386,17 +399,15 @@ def is_in_git_raw(file, data, dummy):
     report_fail = lambda dir, command: \
         f'When executing in directory: {dir}\n>{command} failed'
 
-    dir = os.path.dirname(file)
-    git_dir = os.path.realpath(dir)
+    git_dir = get_git_dir(file)
     if git_dir == None:
         return False
+
     # Make a pushd to the git dir
     curr_dir = os.getcwd()
     os.chdir(git_dir)
 
-    # srctool may return in all lower case and that is not OK with git
-    as_on_disk = Path(file).resolve()
-    commando = f'git ls-files -s "{as_on_disk}"'
+    commando = f'git ls-files -s "{file}"'
     reply = simur.run_process(commando, False) # False since git may complain
     if len(reply) == 0:                        # if it is not a repo
         os.chdir(curr_dir)
@@ -409,10 +420,10 @@ def is_in_git_raw(file, data, dummy):
 #    print(f'GIT: |{reply}|')
     repo = re.match('^(\d+)\s*([a-fA-F0-9]+)\s*(\d+)\s*(.+)$', reply)
     if repo:
-        data['revision'] = repo.group(2)
+        data['reporoot'] = str(git_dir)
         data['relpath']  = repo.group(4)
-        data['reporoot'] = git_dir
-        data['local']    = git_dir
+        data['revision'] = repo.group(2)
+        data['local']    = str(git_dir)
     else:
         print(report_fail(git_dir, commando))
         print(f'When executing in directory: {git_dir}')
@@ -445,6 +456,9 @@ def get_vcs_information(files, vcs_cache, svn_cache, git_cache):
     for file in files:
         if skip_file(file):
             continue
+        # Restore correct case-ing to satisfy git (and me)
+        file = Path(file).resolve()
+        file = str(file)
         if file in vcs_cache.keys():
             cached = vcs_cache[file]
             if no_vcs in cached.keys():
@@ -456,17 +470,9 @@ def get_vcs_information(files, vcs_cache, svn_cache, git_cache):
                 data[file] = response
                 vcs_cache[file] = response
                 continue
-            if True:
-                if is_in_git(file, response, git_cache):
-                    key = Path(file).resolve()
-                    key = str(key)
-                    data[key] = response
-                    vcs_cache[file] = response
-            else:
-                if is_in_old_git(file, response, git_cache):
-                    data[file] = response
-                    vcs_cache[file] = response
-
+            if is_in_git(file, response, git_cache):
+                data[file] = response
+                vcs_cache[file] = response
                 continue
             response[no_vcs] = "true"
             vcs_cache[file] = response
@@ -727,14 +733,14 @@ def verify_cache_data(vcs_cache):
             vcs_system = cached["vcs"]
             if vcs_system == 'svn':
                 response = {}
-                if is_in_svn(file, response, svn_cache):
+                if is_in_svn_raw(file, response, svn_cache):
                     new_data[file] = response
                 else:
                     print(f'svn:{file} removed from cache')
                 continue
             if vcs_system == 'git':
                 response = {}
-                if is_in_git(file, response, git_cache):
+                if is_in_git_raw(file, response, git_cache):
                     new_data[file] = response
                 else:
                     print(f'git:{file} removed from cache')
