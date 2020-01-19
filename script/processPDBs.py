@@ -1,5 +1,6 @@
 import os
 import prepPDB
+import shutil
 import simur
 import sys
 
@@ -28,6 +29,31 @@ def list_all_files(dir, ext):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
+def make_log(srcsrv):
+    bins_used = [
+        shutil.which('python.exe'),
+        os.path.join(srcsrv,'srctool.exe'),
+        os.path.join(srcsrv,'pdbstr.exe'),
+        shutil.which('git.exe'),
+        shutil.which('svn.exe')
+    ]
+    print(f'Executed by      : {os.getenv("USERNAME")}')
+    print(f' on machine      : {os.getenv("COMPUTERNAME")}')
+    print(f' SIMUR_LOCAL_REPO: {os.getenv("SIMUR_LOCAL_REPO")}')
+    print('Script:')
+    print(os.path.realpath(sys.argv[0]))
+    print('Using binaries:')
+    for the_exe in bins_used:
+        the_exe = os.path.join(srcsrv, the_exe)
+        props = simur.getFileProperties(the_exe)
+        print(f'{the_exe}:')
+        print(f'  {props["StringFileInfo"]["FileVersion"]}')
+        print(f'  {props["FileVersion"]}')
+
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
 def main():
     debug_level = 0
     if len(sys.argv) < 2:
@@ -44,7 +70,7 @@ def main():
 
     pdbs = list_all_files(root, ".pdb")
     if len(pdbs) == 0:
-        print(f'No PDB:s fond in directory {root}')
+        print(f'No PDB:s found in directory {root}')
         return 3
 
     outcome = 0
@@ -67,6 +93,7 @@ def main():
         print(f'---\n')
     simur.store_json_data(cache_file, vcs_cache)
 
+    make_log(srcsrv)
     return outcome
 
 #-------------------------------------------------------------------------------
