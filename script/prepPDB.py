@@ -493,6 +493,14 @@ def dump_vcsdata(vcs_information):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
+def plural_files(no):
+    if no == 1:
+        return 'file'
+    return 'files'
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
 def report_vcsdata(vcs_information):
     vcses = {}
     for file in vcs_information:
@@ -504,7 +512,7 @@ def report_vcsdata(vcs_information):
             vcses[vcs] = 1
 
     for key in vcses:
-        print(f'Found {vcses[key]} files using {key}')
+        print(f'Found {vcses[key]} {plural_files(vcses[key])} using {key}')
 
     return vcses
 
@@ -683,7 +691,7 @@ def do_the_job(root, srcsrv, vcs_cache, svn_cache, git_cache, debug=0):
         print(f'No files to index in {root}')
         return 0
     else:
-        print(f'Found {len(files)} source files')
+        print(f'Found {len(files)} source {plural_files(len(files))}')
 
     if debug > 3:
         for file in files:
