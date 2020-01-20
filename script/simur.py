@@ -1,7 +1,11 @@
 import json
 import os
 import subprocess
-import win32api
+got_win32api = True
+try:
+    import win32api
+except ModuleNotFoundError:
+    got_win32api = False
 
 #-------------------------------------------------------------------------------
 #
@@ -143,8 +147,6 @@ def find_and_update_git(local_repo, reporoot):
 
     return git_dir
 
-import win32api
-
 #-------------------------------------------------------------------------------
 # Shamelessly stolen from:
 # https://stackoverflow.com/questions/580924/python-windows-file-version-attribute
@@ -153,6 +155,9 @@ def getFileProperties(fname):
     """
     Read all properties of the given file return them as a dictionary.
     """
+    if got_win32api == False:
+        return None
+
     propNames = ('Comments', 'InternalName', 'ProductName',
         'CompanyName', 'LegalCopyright', 'ProductVersion',
         'FileDescription', 'LegalTrademarks', 'PrivateBuild',

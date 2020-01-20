@@ -45,10 +45,11 @@ def make_log(srcsrv):
     print('Using binaries:')
     for the_exe in bins_used:
         the_exe = os.path.join(srcsrv, the_exe)
+        print(f'  {the_exe}:')
         props = simur.getFileProperties(the_exe)
-        print(f'{the_exe}:')
-        print(f'  {props["StringFileInfo"]["FileVersion"]}')
-        print(f'  {props["FileVersion"]}')
+        if props:
+            print(f'    {props["StringFileInfo"]["FileVersion"]}')
+            print(f'    {props["FileVersion"]}')
 
 
 #-------------------------------------------------------------------------------
