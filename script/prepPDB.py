@@ -609,7 +609,7 @@ def dump_stream_to_pdb(pdb_file, srcsrv, stream):
 #   del %%~nI
 #   ren %%I %%~nI
 # )
-    make_backup_file(pdb_file, '.orig')
+#    make_backup_file(pdb_file, '.orig')
     pdbstr = os.path.join(srcsrv, 'pdbstr.exe')
     commando = f'{pdbstr} -w -s:srcsrv -p:{pdb_file} -i:{tempfile}'
     reply = simur.run_process(commando, True)
@@ -636,10 +636,16 @@ def update_presoak_file(vcs_data):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def check_paths(root, srcsrv):
+def check_winkits(srcsrv):
     if not os.path.exists(srcsrv):
         print(f'Sorry, the WinKits directory {srcsrv} does not exist')
         return 3
+    return 0
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
+def check_paths(root):
     if not os.path.exists(root):
         print(f'Sorry, the pdb {root} does not exist')
         return 3
@@ -652,8 +658,21 @@ def check_paths(root, srcsrv):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
+def check_indexed(root, srcsrv):
+    if is_indexed(root, srcsrv):
+        print(f'Sorry, {root} is already indexed or has no debug information')
+        ext = Path(root).suffix
+        if ext != '.pdb':
+            print(f'  (debug information usually has extension .pdb, not {ext})')
+        return 1
+
+    return 0
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
 def check_requirements(root, srcsrv):
-    if check_paths(root, srcsrv):
+    if check_paths(root):
         return 3
     if is_indexed(root, srcsrv):
         print(f'Sorry, {root} is already indexed or has no debug information')
@@ -677,7 +696,11 @@ def make_time_stamp(text, debug):
 #
 #-------------------------------------------------------------------------------
 def do_the_job(root, srcsrv, vcs_cache, svn_cache, git_cache, debug=0):
-    failing_requirements = check_requirements(root, srcsrv)
+    already_indexed = check_indexed(root, srcsrv)
+    if already_indexed:
+        return 0
+
+    failing_requirements = check_paths(root)
     if failing_requirements:
         return failing_requirements
 
@@ -771,6 +794,10 @@ def main():
     debug = 0
     root = sys.argv[1]
     srcsrv = sys.argv[2]
+
+    failing_requirements = check_requirements(root, srcsrv)
+    if failing_requirements:
+        return failing_requirements
 
     dummy_cache = {}
     svn_cache = {}

@@ -31,7 +31,7 @@ def list_all_files(dir, ext):
 #-------------------------------------------------------------------------------
 def make_log(srcsrv):
     bins_used = [
-        shutil.which('python.exe'),
+        sys.executable,
         os.path.join(srcsrv,'srctool.exe'),
         os.path.join(srcsrv,'pdbstr.exe'),
         shutil.which('git.exe'),
@@ -65,8 +65,7 @@ def main():
     srcsrv = 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\srcsrv'
     if len(sys.argv) > 2:
         srcsrv = sys.argv[2]
-    if not os.path.exists(root):
-        print(f'Sorry, the directory {root} does not exist')
+    if prepPDB.check_winkits(srcsrv):
         return 3
 
     pdbs = list_all_files(root, ".pdb")
