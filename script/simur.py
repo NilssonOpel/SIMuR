@@ -49,7 +49,7 @@ def my_mkdir(the_dir):
 def get_repo_cache_dir():
     # Take in the cache directory through an environment variable since vcget
     # may be called spontaneous from all kind of debugging tools
-    cache_dir = os.getenv('SIMUR_REPO_CACHE', 'C:\simur_repo')
+    cache_dir = os.getenv('SIMUR_REPO_CACHE', 'C:\\simur_repo')
     canon_dir = os.path.realpath(cache_dir)
     if not os.path.exists(canon_dir):
         print(f'get_repo_cache_dir(): got {canon_dir}')

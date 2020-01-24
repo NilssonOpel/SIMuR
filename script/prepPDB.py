@@ -13,7 +13,7 @@ import urllib
 #-------------------------------------------------------------------------------
 def usage():
     print(f'{sys.argv[0]} pdb-file srcsrv-dir')
-    print(f'  e.g. {sys.argv[0]} RelWithDebInfo\TestGitCat.pdb C:\WinKits\10\Debuggers\x64\srcsrv')
+    print(f'  e.g. {sys.argv[0]} RelWithDebInfo\TestGitCat.pdb C:/WinKits/10/Debuggers/x64/srcsrv')
 
 #-------------------------------------------------------------------------------
 # --- Routines for extracting the data from the pdb and associated vcs:s ---

@@ -10,7 +10,7 @@ import sys
 def usage():
     the_script = os.path.basename(sys.argv[0])
     print(f'usage: {the_script} pdb-dir srcsrv-dir')
-    print(f'  e.g. {the_script} RelWithDebInfo C:\WinKits\10\Debuggers\x64\srcsrv')
+    print(f'  e.g. {the_script} RelWithDebInfo C:/WinKits/10/Debuggers/x64/srcsrv')
     print( '    process all the PDB:s in the pdb-dir and sub directories')
 
 #-------------------------------------------------------------------------------
@@ -62,7 +62,7 @@ def main():
         usage()
         exit(3)
     root = sys.argv[1]
-    srcsrv = 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\srcsrv'
+    srcsrv = 'C:\\Program Files (x86)\\Windows Kits\\10\\Debuggers\x64\srcsrv'
     if len(sys.argv) > 2:
         srcsrv = sys.argv[2]
     if prepPDB.check_winkits(srcsrv):
