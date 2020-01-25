@@ -59,25 +59,6 @@ def is_indexed(root, srcsrv):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def split_url(url):
-#    print(f'url: {url}')
-    #https://tools.ietf.org/pdf/rfc3986.pdf
-    parsed = urllib.parse.urlparse(url)
-    reporoot = f'{parsed.scheme}://'
-    if parsed.username:
-        reporoot += f'{parsed.username}@'
-        if parsed.password:
-            reporoot += parsed.password
-    reporoot += parsed.netloc
-    if parsed.port:
-        reporoot += f':{parsed.port}'
-
-    relpath = parsed.path
-    return reporoot, relpath
-
-#-------------------------------------------------------------------------------
-#
-#-------------------------------------------------------------------------------
 def get_non_indexed(root, srcsrv):
     srctool = os.path.join(srcsrv, 'srctool.exe')
     commando = f'{srctool} -r {root}'
@@ -374,6 +355,7 @@ def is_in_git(file, data, git_cache):
             cache_entry['reporoot'] = git_remote
             cache_entry['relpath']  = rel_key
             cache_entry['revision'] = revision
+            cache_entry['sha1'] = revision
             cache_entry['local']    = git_dir
             cache_entry['remote']   = git_remote
             cache_entry['vcs']      = 'git'
@@ -423,6 +405,7 @@ def is_in_git_raw(file, data, dummy):
         data['reporoot'] = str(git_dir)
         data['relpath']  = repo.group(4)
         data['revision'] = repo.group(2)
+        data['sha1'] = repo.group(2)
         data['local']    = str(git_dir)
     else:
         print(report_fail(git_dir, commando))
@@ -544,15 +527,16 @@ def init_the_stream_text(vcs_information):
     # fnfile - extract filename (basename)
     # targ   - is the temp dir where the debugger roots its contents
     stream.append('VCGET_TARGET=' +
-        '%targ%\\%fnbksl%(%var4%)\\%var5%\\%fnfile%(%var1%)')
+        '%targ%\\%fnbksl%(%var4%)\\%var6%\\%fnfile%(%var1%)')
     # How to build the command to extract file from source control
     stream.append('VCGET_COMMAND=' +
         'cmd /c vcget.cmd %var2% "%var3%" "%var4%" %var5% > "%vcget_target%"')
 
     # our data
-    #  VAR2 VAR3       VAR4      VAR5
-    # 'svn'*<reporoot>*<relpath>*revision
-    # 'git'*<reporoot>*<relpath>*sha
+    #  VAR2 VAR3       VAR4      VAR5     VAR6
+    # 'svn'*<reporoot>*<relpath>*revision*sha1
+    # 'git'*<reporoot>*<relpath>*revision*sha1
+    # for git revision and sha1 is the same
     stream.append('SRCSRV: source files --------------------------------------')
     for file in vcs_information:
         what = vcs_information[file]
@@ -560,7 +544,8 @@ def init_the_stream_text(vcs_information):
         our_data += f'{what["vcs"]}*'
         our_data += f'{what["reporoot"]}*'
         our_data += f'{what["relpath"]}*'
-        our_data += f'{what["revision"]}'
+        our_data += f'{what["revision"]}*'
+        our_data += f'{what["sha1"]}'
         stream.append(our_data)
 
     stream.append('SRCSRV: end -----------------------------------------------')
