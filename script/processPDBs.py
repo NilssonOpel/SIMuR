@@ -1,8 +1,10 @@
 import os
-import prepPDB
+import re
 import shutil
 import simur
 import sys
+
+import prepPDB
 
 #-------------------------------------------------------------------------------
 #
@@ -11,15 +13,15 @@ def usage():
     the_script = os.path.basename(sys.argv[0])
     print(f'usage: {the_script} pdb-dir srcsrv-dir')
     print(f'  e.g. {the_script} RelWithDebInfo C:/WinKits/10/Debuggers/x64/srcsrv')
-    print( '    process all the PDB:s in the pdb-dir and sub directories')
+    print(f'    process all the PDB:s in the pdb-dir and sub directories')
 
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def list_all_files(dir, ext):
+def list_all_files(directory, ext):
     the_chosen_files = []
 
-    for root, dirs, files in os.walk(dir):
+    for root, dirs, files in os.walk(directory):
         for file in files:
             if file.endswith(ext):
                 the_chosen_files.append(os.path.join(root, file))
@@ -32,14 +34,19 @@ def list_all_files(dir, ext):
 def make_log(srcsrv):
     bins_used = [
         sys.executable,
-        os.path.join(srcsrv,'srctool.exe'),
-        os.path.join(srcsrv,'pdbstr.exe'),
+        os.path.join(srcsrv, 'srctool.exe'),
+        os.path.join(srcsrv, 'pdbstr.exe'),
         shutil.which('git.exe'),
         shutil.which('svn.exe')
     ]
     print(f'Executed by      : {os.getenv("USERNAME")}')
     print(f' on machine      : {os.getenv("COMPUTERNAME")}')
     print(f' SIMUR_LOCAL_REPO: {os.getenv("SIMUR_LOCAL_REPO")}')
+    codepage = simur.run_process('cmd /c CHCP', False)
+    cp = re.match(r'^.*:\s+(\d*)$', codepage)
+    if cp:
+        codepage = cp.group(1)
+    print(f' CodePage        : {codepage}')
     print('Script:')
     print(os.path.realpath(sys.argv[0]))
     print('Using binaries:')
@@ -62,7 +69,7 @@ def main():
         usage()
         exit(3)
     root = sys.argv[1]
-    srcsrv = 'C:\\Program Files (x86)\\Windows Kits\\10\\Debuggers\x64\srcsrv'
+    srcsrv = 'C:\\Program Files (x86)\\Windows Kits\\10\\Debuggers\\x64\\srcsrv'
     if len(sys.argv) > 2:
         srcsrv = sys.argv[2]
     if prepPDB.check_winkits(srcsrv):

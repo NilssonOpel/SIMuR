@@ -13,7 +13,7 @@ import urllib
 #-------------------------------------------------------------------------------
 def usage():
     print(f'{sys.argv[0]} pdb-file srcsrv-dir')
-    print(f'  e.g. {sys.argv[0]} RelWithDebInfo\TestGitCat.pdb C:/WinKits/10/Debuggers/x64/srcsrv')
+    print(f'  e.g. {sys.argv[0]} RelWithDebInfo/TestGitCat.pdb C:/WinKits/10/Debuggers/x64/srcsrv')
 
 #-------------------------------------------------------------------------------
 # --- Routines for extracting the data from the pdb and associated vcs:s ---
@@ -231,12 +231,12 @@ def is_in_svn_raw(file, data, cache):
             data['relpath']  = url_rel
             hits += 1
             continue
-        rev = re.match('^Revision: (.*)$', line)
+        rev = re.match(r'^Revision: (.*)$', line)
         if rev:
             data['revision'] = rev.group(1)
             hits += 1
             continue
-        sha1 = re.match('^Checksum: ([a-fA-F0-9]+)$', line)
+        sha1 = re.match(r'^Checksum: ([a-fA-F0-9]+)$', line)
         if sha1:
             data['sha1']  = sha1.group(1)
             hits += 1
@@ -317,7 +317,7 @@ def is_in_git(file, data, git_cache):
     reply = simur.run_process(commando, True)
     lines = reply.splitlines()
     for line in lines:
-        remote = re.match('^origin\s*(.+)\s+\(fetch\)$', line)
+        remote = re.match(r'^origin\s*(.+)\s+\(fetch\)$', line)
         if remote:
             git_remote = remote.group(1)
         # No else - you cannot know it there is a remote
@@ -338,7 +338,7 @@ def is_in_git(file, data, git_cache):
     # Iterate on lines
     for line in reply.splitlines():
     # 100644 2520fa373ff004b2fd4f9fa3e285b0d7d36c9319 0       script/prepPDB.py
-        repo = re.match('^\d+\s*([a-fA-F0-9]+)\s*\d+\s*(.+)$', line)
+        repo = re.match(r'^\d+\s*([a-fA-F0-9]+)\s*\d+\s*(.+)$', line)
         if repo:
             revision = repo.group(1)
             rel_key  = repo.group(2)
@@ -400,7 +400,7 @@ def is_in_git_raw(file, data, dummy):
         return False
     reply = reply.rstrip()
 #    print(f'GIT: |{reply}|')
-    repo = re.match('^(\d+)\s*([a-fA-F0-9]+)\s*(\d+)\s*(.+)$', reply)
+    repo = re.match(r'^(\d+)\s*([a-fA-F0-9]+)\s*(\d+)\s*(.+)$', reply)
     if repo:
         data['reporoot'] = str(git_dir)
         data['relpath']  = repo.group(4)
@@ -419,7 +419,7 @@ def is_in_git_raw(file, data, dummy):
     reply = simur.run_process(commando, True)
     lines = reply.splitlines()
     for line in lines:
-        remote = re.match('^origin\s*(.+)\s+\(fetch\)$', line)
+        remote = re.match(r'^origin\s*(.+)\s+\(fetch\)$', line)
         if remote:
             data['reporoot'] = remote.group(1)
             data['remote']   = remote.group(1)
