@@ -26,9 +26,14 @@ def skip_file(file):
     skipping_dirs = [
         "c:\\program files",
         "C:\\Program Files",
+#        "f:\\dd\vctools",
+#        "f:\\dd\externalsapis",
     ]
     dir_contains = [
-        "build",
+#        "build",
+    ]
+    skipping_extensions = [
+#        ".tmp"
     ]
 
     dir = os.path.dirname(file)
@@ -38,6 +43,11 @@ def skip_file(file):
 
     for skip_dir in dir_contains:
         if skip_dir in dir:
+            return True
+
+    filename, extension = os.path.splitext(file)
+    for skip_ext in skipping_extensions:
+        if extension in skip_ext:
             return True
 
     return False
@@ -84,21 +94,26 @@ def is_in_svn(file, data, svn_cache):
             svn_content = svn_cache[cached_dir] # dict on abs path file
             if file in svn_content.keys():
                 copy_cache_response(data, svn_content[file])
+#                print(f'Found in cache: {file}')
                 return True
 
     svn_dir = get_root_dir(file, '.svn')
     if svn_dir == None:
         return False
 
+    if str(svn_dir) in svn_cache.keys():
+#        print(f'Already cached {svn_dir} - {file}')
+        return False
+
     # Make a pushd to the svn dir
     curr_dir = os.getcwd()
     os.chdir(svn_dir)
 
-#    print(f'svn-caching: {svn_dir}')
+#    print(f'svn-caching: {svn_dir} - {file}')
     commando = f'svn info -R'
     reply = simur.run_process(commando, True)
     if len(reply) < 2:
-        print(f'svn info returned: {reply}')
+#        print(f'svn info returned: {reply}')
         os.chdir(curr_dir)
         return False
 
@@ -147,10 +162,13 @@ def is_in_svn(file, data, svn_cache):
 #                print(f"No revh")
 #            if not sha:
 #                print(f"No sha")
-            if not (path and url and rev and (sha or node_kind)): # DeLorean
+            if not path:
+                path = 'None'
                 node_kind = 'went_wrong'
-            key = os.path.join(svn_dir, path)
+            if not (url and rev and (sha or node_kind)): # DeLorean
+                node_kind = 'went_wrong'
             try:
+                key = os.path.join(svn_dir, path)
                 key = Path(key).resolve()
             except:
                 print(f'cannot handle {path}')
@@ -590,10 +608,15 @@ def make_stream_file(pdb_file, stream):
 def dump_stream_to_pdb(pdb_file, srcsrv, stream):
     tempfile = make_stream_file(pdb_file, stream)
 # To restore the pdb:s
-# for %%I in (*.*.orig) do (
-#   del %%~nI
-#   ren %%I %%~nI
-# )
+#---
+#for /R %%I in (*.*.orig) do call :doit %%I %%~nI %%~pI
+#goto :EOF
+#:doit
+#pushd %3
+#del %2
+#ren %1 %2
+#popd
+#---
 #    make_backup_file(pdb_file, '.orig')
     pdbstr = os.path.join(srcsrv, 'pdbstr.exe')
     commando = f'{pdbstr} -w -s:srcsrv -p:{pdb_file} -i:{tempfile}'

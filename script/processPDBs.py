@@ -3,6 +3,7 @@ import re
 import shutil
 import simur
 import sys
+import time
 
 import prepPDB
 
@@ -31,7 +32,7 @@ def list_all_files(directory, ext):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def make_log(srcsrv):
+def make_log(srcsrv, elapsed):
     bins_used = [
         sys.executable,
         os.path.join(srcsrv, 'srctool.exe'),
@@ -41,7 +42,9 @@ def make_log(srcsrv):
     ]
     print(f'Executed by      : {os.getenv("USERNAME")}')
     print(f' on machine      : {os.getenv("COMPUTERNAME")}')
-    print(f' SIMUR_LOCAL_REPO: {os.getenv("SIMUR_LOCAL_REPO")}')
+    print(f' SIMUR_REPO_CACHE: {os.getenv("SIMUR_REPO_CACHE")}')
+    print(f' elapsed time    : {elapsed}')
+
     codepage = simur.run_process('cmd /c CHCP', False)
     cp = re.match(r'^.*:\s+(\d*)$', codepage)
     if cp:
@@ -63,6 +66,8 @@ def make_log(srcsrv):
 #
 #-------------------------------------------------------------------------------
 def main():
+    start = time.time()
+
     debug_level = 0
     if len(sys.argv) < 2:
         print("Too few arguments")
@@ -85,7 +90,6 @@ def main():
     vcs_cache = simur.load_json_data(cache_file)
     # Should verify or update the cache before using it! - But it takes time
     # vcs_cache = prepPDB.verify_cache_data(vcs_cache)
-
     svn_cache = {}
     git_cache = {}
 
@@ -99,8 +103,8 @@ def main():
             debug_level)
         print(f'---\n')
     simur.store_json_data(cache_file, vcs_cache)
-
-    make_log(srcsrv)
+    end = time.time()
+    make_log(srcsrv, end-start)
     return outcome
 
 #-------------------------------------------------------------------------------

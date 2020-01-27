@@ -1,6 +1,7 @@
 import hashlib
 import json
 import os
+import re
 import subprocess
 got_win32api = True
 try:
@@ -11,12 +12,30 @@ except ModuleNotFoundError:
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
+'''Get current code page'''
+def ccp():
+    try:
+        return ccp.codepage
+    except AttributeError:
+        reply = os.popen('cmd /c CHCP').read()
+        cp = re.match(r'^.*:\s+(\d*)$', reply)
+        if cp:
+            ccp.codepage = cp.group(1)
+        else:
+            ccp.codepage = 'utf-8'
+        return ccp.codepage
+
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
 def run_process(command, do_check, extra_dir=os.getcwd()):
     try:
         status = subprocess.run(command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            encoding=ccp(),     # See https://bugs.python.org/issue27179
             check=do_check)
         if status.returncode == 0:
             reply = status.stdout
