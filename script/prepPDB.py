@@ -3,10 +3,9 @@ import os
 from pathlib import Path
 import re
 import shutil
-import simur
-import subprocess
 import sys
-import urllib
+
+import simur
 
 #-------------------------------------------------------------------------------
 #
@@ -57,14 +56,16 @@ def skip_file(file):
 #-------------------------------------------------------------------------------
 def is_indexed(root, srcsrv):
     pdbstr = os.path.join(srcsrv, 'pdbstr.exe')
+    # read the pdb and dump its 'srcsrv' stream
+    # - if there is a stream then it is indexed
     commando = f'{pdbstr} -r -p:{root} -s:srcsrv'
     # Looks like pdbstr return -1 if not indexed, and 0 if indexed (?)
     reply = simur.run_process(commando, False)
 
     # I will look at an empty reply as a test
-    if len(reply):
-        return True
-    return False
+    if len(reply) == 0:
+        return False
+    return True
 
 #-------------------------------------------------------------------------------
 #
@@ -219,7 +220,7 @@ def is_in_svn(file, data, svn_cache):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def is_in_svn_raw(file, data, cache):
+def is_in_svn_raw(file, data, dummy):
     svn_dir = get_root_dir(file, '.svn')
     if svn_dir == None:
         return False
@@ -403,7 +404,7 @@ def is_in_git_raw(file, data, dummy):
         f'When executing in directory: {dir}\n>{command} failed'
 
     git_dir = get_git_dir(file)
-    if git_dir == None:
+    if git_dir is None:
         return False
 
     # Make a pushd to the git dir
@@ -623,7 +624,7 @@ def dump_stream_to_pdb(pdb_file, srcsrv, stream):
 #    make_backup_file(pdb_file, '.orig')
     pdbstr = os.path.join(srcsrv, 'pdbstr.exe')
     commando = f'{pdbstr} -w -s:srcsrv -p:{pdb_file} -i:{tempfile}'
-    reply = simur.run_process(commando, True)
+    simur.run_process(commando, True)
 
     os.remove(tempfile)                 # Or keep it for debugging
 
@@ -724,8 +725,8 @@ def do_the_job(root, srcsrv, vcs_cache, svn_cache, git_cache, debug=0):
     if not files:
         print(f'No files to index in {root}')
         return 0
-    else:
-        print(f'Found {len(files)} source {plural_files(len(files))}')
+
+    print(f'Found {len(files)} source {plural_files(len(files))}')
 
     if debug > 3:
         for file in files:
@@ -766,7 +767,6 @@ def verify_cache_data(vcs_cache):
     new_data = {}
     svn_cache = {}
     git_cache = {}
-    no_vcs = 'no-vcs'
 
     files = vcs_cache.keys()
     for file in files:
