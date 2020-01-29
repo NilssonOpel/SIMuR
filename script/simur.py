@@ -131,7 +131,7 @@ def get_the_git_dir(start_dir, find_dir):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def update_git_cache(reporoot):
+def update_git_cache_TO_BE_DELETED(reporoot):
     # Take in the cache directory through an environment variable since vcget
     # may be called from all kind of debugging tools
     global_repo = get_repo_cache_dir()
@@ -155,11 +155,20 @@ def update_git_cache(reporoot):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def find_and_update_git(local_repo, reporoot):
-    curr_dir = os.getcwd()
-    os.chdir(local_repo)
+def find_and_update_git_cache(reporoot):
+    # Take in the cache directory through an environment variable since vcget
+    # may be called from all kind of debugging tools
+    global_repo = get_repo_cache_dir()
 
-    git_dir = get_the_git_dir(local_repo, '.git')
+    reporoot_as_bytes = reporoot.encode() # default utf-8
+    repo_dir = hashlib.sha1(reporoot_as_bytes).hexdigest()
+    subdir = os.path.join(global_repo, repo_dir)
+    global_repo = my_mkdir(subdir)
+
+    curr_dir = os.getcwd()
+    os.chdir(global_repo)
+
+    git_dir = get_the_git_dir(global_repo, '.git')
 
     if git_dir:
         os.chdir(git_dir)
@@ -167,8 +176,8 @@ def find_and_update_git(local_repo, reporoot):
         run_process(command, True, git_dir)
     else:
         command = f'git clone {reporoot}'
-        reply = run_process(command, True, local_repo)
-        git_dir = get_the_git_dir(local_repo, '.git')
+        reply = run_process(command, True, global_repo)
+        git_dir = get_the_git_dir(global_repo, '.git')
 
     # Update the dictionary of reporoot and the sha1 so we can have a 'presoak'
     # that updates all the current repos off-line.  It can be tedious if vcget
@@ -177,14 +186,14 @@ def find_and_update_git(local_repo, reporoot):
     presoak = load_json_data(presoak_file)
     if not presoak:     # You may get an empty dictionary
         if presoak[reporoot] == 'presoak':
-            presoak[reporoot] = local_repo
+            presoak[reporoot] = global_repo
             store_json_data(presoak_file, presoak)
         else:
-            if presoak[reporoot] != local_repo:
+            if presoak[reporoot] != global_repo:
                 print(f'internal_error presoaking for {reporoot}:')
-                print(f'  {presoak[reporoot]} vs {local_repo}')
+                print(f'  {presoak[reporoot]} vs {global_repo}')
     else:  # Add if missing
-        presoak[reporoot] = local_repo
+        presoak[reporoot] = global_repo
         store_json_data(presoak_file, presoak)
 
     os.chdir(curr_dir)

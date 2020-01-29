@@ -39,20 +39,11 @@ def handle_local_git(reporoot, revision):
 #
 #-------------------------------------------------------------------------------
 def handle_remote_git(reporoot, revision):
-    # Take in the cache directory through an environment variable since vcget
-    # may be called from all kind of debugging tools
-    global_repo = simur.get_repo_cache_dir()
-
-    reporoot_as_bytes = reporoot.encode() # default utf-8
-    repo_dir = hashlib.sha1(reporoot_as_bytes).hexdigest()
-    subdir = os.path.join(global_repo, repo_dir)
-    global_repo = simur.my_mkdir(subdir)
-
-    git_dir = simur.find_and_update_git(global_repo, reporoot)
+    git_dir = simur.find_and_update_git_cache(reporoot)
 
     if not git_dir:
         reply  = f'Could not find a .git dir from {reporoot}\n'
-        reply += f'when looking in {global_repo}'
+        reply += f'when looking in {git_dir}'
     else:
         curr_dir = os.getcwd()
         os.chdir(git_dir)

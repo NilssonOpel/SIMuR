@@ -34,7 +34,7 @@ def main():
                 print(f'  Cloning {dir}')
             else:
                 print(f'  Already cloned: {dir}')
-            git_dir = simur.update_git_cache(dir)
+            git_dir = simur.find_and_update_git_cache(dir)
             print(f'  Updated, git dir {git_dir}')
 
     return 0
