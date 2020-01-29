@@ -171,7 +171,10 @@ def is_in_svn(file, data, svn_cache):
                 key = os.path.join(svn_dir, path)
                 key = Path(key).resolve()
             except:
-                print(f'cannot handle {path}')
+                print(f'cannot handle the path')
+                # Incapacitate in case we encounter them in the future
+                path = 'throw_on_path'
+                key  = 'throw_on_key'
                 hits = 0
                 node_kind = 'exception'
 
