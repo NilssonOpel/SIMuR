@@ -131,30 +131,6 @@ def get_the_git_dir(start_dir, find_dir):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def update_git_cache_TO_BE_DELETED(reporoot):
-    # Take in the cache directory through an environment variable since vcget
-    # may be called from all kind of debugging tools
-    global_repo = get_repo_cache_dir()
-
-    reporoot_as_bytes = reporoot.encode() # default utf-8
-    repo_dir = hashlib.sha1(reporoot_as_bytes).hexdigest()
-    subdir = os.path.join(global_repo, repo_dir)
-    git_dir = my_mkdir(subdir)
-
-    if git_dir:
-        os.chdir(git_dir)
-        command = 'git pull'
-        run_process(command, True, git_dir)
-    else:
-        command = f'git clone {reporoot}'
-        reply = run_process(command, True, local_repo)
-        git_dir = get_the_git_dir(local_repo, '.git')
-
-    return git_dir
-
-#-------------------------------------------------------------------------------
-#
-#-------------------------------------------------------------------------------
 def find_and_update_git_cache(reporoot):
     # Take in the cache directory through an environment variable since vcget
     # may be called from all kind of debugging tools
