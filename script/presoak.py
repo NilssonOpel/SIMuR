@@ -1,7 +1,7 @@
 import os
-import prepPDB
-import simur
 import sys
+
+import simur
 
 #-------------------------------------------------------------------------------
 #
@@ -26,16 +26,16 @@ def main():
     if not presoak:     # You may get an empty dictionary
         print(f'No presoak information found in {presoak_file}')
         return 0
-    else:
-        print(f'Processing {presoak_file}')
-        for dir in presoak.keys():
-            print(f'Looking at {dir}')
-            if presoak[dir] == 'presoak':
-                print(f'  Cloning {dir}')
-            else:
-                print(f'  Already cloned: {dir}')
-            git_dir = simur.find_and_update_git_cache(dir)
-            print(f'  Updated, git dir {git_dir}')
+
+    print(f'Processing {presoak_file}')
+    for directory in presoak.keys():
+        print(f'Looking at {directory}')
+        if presoak[directory] == 'presoak':
+            print(f'  Cloning {directory}')
+        else:
+            print(f'  Already cloned: {directory}')
+        git_dir = simur.find_and_update_git_cache(directory)
+        print(f'  Updated, git dir {git_dir}')
 
     return 0
 
