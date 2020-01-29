@@ -67,7 +67,6 @@ def make_log(srcsrv, elapsed):
 #-------------------------------------------------------------------------------
 def main():
     start = time.time()
-
     debug_level = 0
     if len(sys.argv) < 2:
         print("Too few arguments")
@@ -87,9 +86,10 @@ def main():
 
     outcome = 0
     cache_file = os.path.join(root, 'vcs_cache.json')
-    vcs_cache = simur.load_json_data(cache_file)
+    # vcs_cache = simur.load_json_data(cache_file)
     # Should verify or update the cache before using it! - But it takes time
     # vcs_cache = prepPDB.verify_cache_data(vcs_cache)
+    vcs_cache = {}
     svn_cache = {}
     git_cache = {}
 
@@ -102,7 +102,7 @@ def main():
             git_cache,
             debug_level)
         print(f'---\n')
-    simur.store_json_data(cache_file, vcs_cache)
+#    simur.store_json_data(cache_file, vcs_cache)
     end = time.time()
     make_log(srcsrv, end-start)
     return outcome
