@@ -15,7 +15,7 @@ and path to vcget.py
 
 - Run processPDBs.py 'dir-with-pdbs' 'srcsrv-dir'
 
-**Now the .pdb files will contain instructions how to fetch the correct source files **
+**Now the .pdb files will contain instructions how to fetch the correct source files**
 
     VERSION=1
     VERCTL=SvnGit
