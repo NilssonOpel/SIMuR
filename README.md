@@ -15,6 +15,22 @@ and path to vcget.py
 
 - Run processPDBs.py 'dir-with-pdbs' 'srcsrv-dir'
 
+**Now the .pdb files will contain instructions how to fetch the correct source files **
+
+    VERSION=1
+    VERCTL=SvnGit
+    DATETIME=2020-01-29T20:49:57.489168
+    SRCSRV: variables -----------------------------------------
+    SRCSRVTRG=%vcget_target%
+    SRCSRVCMD=%vcget_command%
+    VCGET_TARGET=%targ%\%fnbksl%(%var4%)\%var6%\%fnfile%(%var1%)
+    VCGET_COMMAND=cmd /c vcget.cmd %var2% "%var3%" "%var4%" %var5% > "%vcget_target%"
+    SRCSRV: source files --------------------------------------
+    C:\wrk\SIMuR\GitHub\SIMuR\test\src\fromRiouxSVN\trunk\main.c*svn*https://svn.riouxsvn.com/svncat_test1/trunk*main.c*6*3416941a16288d58f71b557766b8d92153aa00f0
+    C:\wrk\SIMuR\GitHub\SIMuR\test\src\fromGitHub\gitcat_test2\success2.c*git*https://github.com/NilssonOpel/gitcat_test2.git*success2.c*0e16bc26f4327eb4a1607c42a2c1011e4c670e5d*0e16bc26f4327eb4a1607c42a2c1011e4c670e5d
+
+- Test to call 'vcget.cmd git https://github.com/NilssonOpel/gitcat_test2.git*success2.c 0e16bc26f4327eb4a1607c42a2c1011e4c670e5d'
+
 Did it not work out?  Then proceed to 'To test it'
 
 ## To test it
