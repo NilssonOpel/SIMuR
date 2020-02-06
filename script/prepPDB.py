@@ -123,7 +123,6 @@ def is_in_svn(file, data, svn_cache):
     dir_cache = svn_cache[svn_dir]
 
     lines = reply.splitlines()
-    more_lines = True
 
     path_str = 'Path: '
     url_str = 'URL: '
@@ -172,7 +171,7 @@ def is_in_svn(file, data, svn_cache):
                 key = os.path.join(svn_dir, path)
                 key = Path(key).resolve()
             except:
-                print(f'cannot handle the path')
+#                print(f'cannot handle the path')
                 # Incapacitate in case we encounter them in the future
                 path = 'throw_on_path'
                 key  = 'throw_on_key'
@@ -731,8 +730,6 @@ def do_the_job(root, srcsrv, vcs_cache, svn_cache, git_cache, debug=0):
     if debug > 3:
         for file in files:
             print(file)
-
-    root_dir = os.path.dirname(root)
 
     make_time_stamp('get_vcs_information', debug)
     vcs_data = get_vcs_information(files, vcs_cache, svn_cache, git_cache)

@@ -50,6 +50,8 @@ def run_process(command, do_check, extra_dir=os.getcwd()):
         reply += f'type: {type(e)}\n'
         reply += f'    : {e}\n'
         reply += '\n-end of exception-\n'
+        reply += f'stdout: {e.stdout}\n'
+        reply += f'stderr: {e.stderr}\n'
 
     return reply
 
