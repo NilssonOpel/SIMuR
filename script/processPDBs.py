@@ -32,26 +32,46 @@ def list_all_files(directory, ext):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
+def get_available_bins(bins_in):
+    bins_found = []
+    bins_not  = []
+    for the_bin in bins_in:
+        reply = shutil.which(the_bin)
+        if reply == None:
+            bins_not.append(the_bin)
+        else:
+            bins_found.append(reply)
+    return bins_found, bins_not
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
 def make_log(srcsrv, elapsed):
     bins_used = [
         sys.executable,
         os.path.join(srcsrv, 'srctool.exe'),
         os.path.join(srcsrv, 'pdbstr.exe'),
-        shutil.which('git.exe'),
-        shutil.which('svn.exe')
     ]
-    print(f'Executed by      : {os.getenv("USERNAME")}')
-    print(f' on machine      : {os.getenv("COMPUTERNAME")}')
-    print(f' SIMUR_REPO_CACHE: {os.getenv("SIMUR_REPO_CACHE")}')
-    print(f' elapsed time    : {elapsed}')
+    maybe_bins = [
+        'git.exe',
+        'svn.exe',
+        'hg.exe'
+    ]
+    found_bins, unfound_bins = get_available_bins(maybe_bins)
+    bins_used += found_bins
+
+    print(f'Executed by       : {os.getenv("USERNAME")}')
+    print(f'  on machine      : {os.getenv("COMPUTERNAME")}')
+    print(f'  SIMUR_REPO_CACHE: {os.getenv("SIMUR_REPO_CACHE")}')
+    print(f'  elapsed time    : {elapsed}')
 
     codepage = simur.run_process('cmd /c CHCP', False)
     cp = re.match(r'^.*:\s+(\d*)$', codepage)
     if cp:
         codepage = cp.group(1)
-    print(f' CodePage        : {codepage}')
+    print(f'  CodePage        : {codepage}')
     print('Script:')
-    print(os.path.realpath(sys.argv[0]))
+    print(f'  {os.path.realpath(sys.argv[0])}')
     print('Using binaries:')
     for the_exe in bins_used:
         the_exe = os.path.join(srcsrv, the_exe)
@@ -61,6 +81,10 @@ def make_log(srcsrv, elapsed):
             print(f'    {props["StringFileInfo"]["FileVersion"]}')
             print(f'    {props["FileVersion"]}')
 
+    if len(unfound_bins):
+        print('Binaries not found/used:')
+        for the_exe in unfound_bins:
+            print(f'  {the_exe}:')
 
 #-------------------------------------------------------------------------------
 #
