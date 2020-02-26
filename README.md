@@ -29,7 +29,10 @@ and path to vcget.py
     C:\wrk\SIMuR\GitHub\SIMuR\test\src\fromRiouxSVN\trunk\main.c*svn*https://svn.riouxsvn.com/svncat_test1/trunk*main.c*6*3416941a16288d58f71b557766b8d92153aa00f0
     C:\wrk\SIMuR\GitHub\SIMuR\test\src\fromGitHub\gitcat_test2\success2.c*git*https://github.com/NilssonOpel/gitcat_test2.git*success2.c*0e16bc26f4327eb4a1607c42a2c1011e4c670e5d*0e16bc26f4327eb4a1607c42a2c1011e4c670e5d
 
-- Test to call 'vcget.cmd git https://github.com/NilssonOpel/gitcat_test2.git*success2.c 0e16bc26f4327eb4a1607c42a2c1011e4c670e5d'
+- Test to call
+    vcget.cmd git https://github.com/NilssonOpel/gitcat_test2.git success2.c 0e16bc26f4327eb4a1607c42a2c1011e4c670e5d
+or
+    vcget.cmd svn https://svn.riouxsvn.com/svncat_test1/trunk main.c 6
 
 Did it not work out?  Then proceed to 'To test it'
 
