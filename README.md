@@ -31,7 +31,7 @@ and path to vcget.py
 
 - Test to call
 
-    vcget.cmd git https://github.com/NilssonOpel/gitcat_test2.git success2.c 0e16bc26f4327eb4a1607c42a2c1011e4c670e5d
+    vcget.cmd git https://github.com/NilssonOpel/gitcat_test2.git success2.c 0e16bc26f432
 
 or
 
