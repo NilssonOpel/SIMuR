@@ -35,7 +35,7 @@ cmake --build %BUILD_DIR% --config %CONFIG%
 
 :: Source index the .pdb
 ::python ..\script\prepPDB.py %BUILD_DIR%\%CONFIG%\TestGitCat.pdb C:\WinKits\10\Debuggers\x64\srcsrv
-python ..\script\processPDBs.py %BUILD_DIR%\%CONFIG%\ C:\WinKits\10\Debuggers\x64\srcsrv
+python ..\script\processPDBs.py %BUILD_DIR%\%CONFIG%\
 if ERRORLEVEL 1 goto FAIL
 :: Invalidate the source path
 move %ROOT% hidden_%ROOT%
