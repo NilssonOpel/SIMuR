@@ -4,9 +4,11 @@ Currently supporting git and svn, and of course multiple repos of both git and
 subversion mixed
 
 ## For the impatient
-- Set the environment variable ***SIMUR_LOCAL_REPO*** to some directory, e.g.
+- Set the environment variable ***SIMUR_REPO_CACHE*** to some directory, e.g.
 
-**set SIMUR_LOCAL_REPO=\\\our-server\simur-share\simur_repo_cache**
+**set SIMUR_REPO_CACHE=\\\our-server\simur-share\simur_repo_cache**
+
+if you do not set it it will point at **C:\simur_repo** by default
 
 - Copy script\vcget.cmd to somewhere in your path, edit it to get the right python
 and path to vcget.py
@@ -30,12 +32,18 @@ and path to vcget.py
     C:\wrk\SIMuR\GitHub\SIMuR\test\src\fromGitHub\gitcat_test2\success2.c*git*https://github.com/NilssonOpel/gitcat_test2.git*success2.c*0e16bc26f4327eb4a1607c42a2c1011e4c670e5d*0e16bc26f4327eb4a1607c42a2c1011e4c670e5d
 
 - Test to call
+> vcget.cmd git https://github.com/NilssonOpel/gitcat_test2.git  success2.c 0e16bc26f432
 
-    vcget.cmd git https://github.com/NilssonOpel/gitcat_test2.git success2.c 0e16bc26f432
+which will call
+> python "your root"\script\vcget.py git https://github.com/NilssonOpel/gitcat_test2.git success2.c 0e16bc26f432
 
-or
+You would now see the content of sucess2.c, and you will have a git repo in folder
+given by SIMUR_REPO_CACHE (or C:\simur_repo if you did not set it)
 
-    vcget.cmd svn https://svn.riouxsvn.com/svncat_test1/trunk main.c 6
+Or test it for Subversion:
+> vcget.cmd svn https://svn.riouxsvn.com/svncat_test1/trunk main.c 6
+
+Subversion do not populate the SIMUR_REPO_CACHE, it uses will use 'svn cat'
 
 Did it not work out?  Then proceed to 'To test it'
 
@@ -56,7 +64,7 @@ then you can easily test it by going to the directory test/ and run ***SetUp.bat
 To get the sources from subversion is so easy, just use **svn cat
 url@revision**.  But when you work with git you must do something
 else.  So my naive idea was to clone all the repositories into a local
-directory (set by environment variable ***SIMUR_LOCAL_REPO***) and use
+directory (set by environment variable ***SIMUR_REPO_CACHE***) and use
 **git show sha1** in the cloned repository.  It started as a git-thing but
 then I realized you could mix it with other VCS:s so I added support for mixing
 git ***and*** subversion.
