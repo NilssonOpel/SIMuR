@@ -6,18 +6,19 @@ subversion mixed
 ## For the impatient
 - Set the environment variable ***SIMUR_REPO_CACHE*** to some directory, e.g.
 
-**set SIMUR_REPO_CACHE=\\\our-server\simur-share\simur_repo_cache**
+> **set SIMUR_REPO_CACHE=\\\our-server\simur-share\simur_repo_cache**
 
 if you do not set it it will point at **C:\simur_repo** by default
 
-- Copy script\vcget.cmd to somewhere in your path, edit it to get the right python
-and path to vcget.py
+- Copy script\vcget.cmd to somewhere in your path, edit it to get the right
+python and path to vcget.py
 
 **vcget.cmd is what your debugger will call to get the sources**
 
 - Run processPDBs.py 'dir-with-pdbs' 'srcsrv-dir'
 
-**Now the .pdb files will contain instructions how to fetch the correct source files**
+**Now the .pdb files will contain instructions how to fetch the correct source
+files**
 
     VERSION=1
     VERCTL=SvnGit
@@ -37,8 +38,8 @@ and path to vcget.py
 which will call
 > python "your root"\script\vcget.py git https://github.com/NilssonOpel/gitcat_test2.git success2.c 0e16bc26f432
 
-You would now see the content of sucess2.c, and you will have a git repo in folder
-given by SIMUR_REPO_CACHE (or C:\simur_repo if you did not set it)
+You would now see the content of sucess2.c, and you will have a git repo in the
+folder given by SIMUR_REPO_CACHE (or C:\simur_repo if you did not set it)
 
 Or test it for Subversion:
 > vcget.cmd svn https://svn.riouxsvn.com/svncat_test1/trunk main.c 6
@@ -55,7 +56,8 @@ If you have these installed
 - CMake
 - Subversion
 - Git
-- Debugging Tools for Windows, https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/index
+- Debugging Tools for Windows,
+https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/index
 
 then you can easily test it by going to the directory test/ and run ***SetUp.bat***
 
