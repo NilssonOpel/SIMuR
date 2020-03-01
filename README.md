@@ -1,24 +1,40 @@
 # SIMuR
 ## Source Indexing for MUltiple Repositories
-Currently supporting git and svn, and of course multiple repos of both git and
-subversion mixed
+Currently supporting mixed repos of git and svn
 
 ## For the impatient
 - Set the environment variable ***SIMUR_REPO_CACHE*** to some directory, e.g.
 
 > **set SIMUR_REPO_CACHE=\\\our-server\simur-share\simur_repo_cache**
 
-if you do not set it it will point at **C:\simur_repo** by default
+if you do not set it, SIMuR will use the path **C:\simur_repo** by default
 
-- Copy script\vcget.cmd to somewhere in your path, edit it to get the right
-python and path to vcget.py
+- Copy script\vcget.cmd to somewhere in your path, edit to get the right
+python and correct path to script\vcget.py
 
 **vcget.cmd is what your debugger will call to get the sources**
 
-- Run processPDBs.py 'dir-with-pdbs' 'srcsrv-dir'
+- Test for git by calling
+> vcget.cmd git https://github.com/NilssonOpel/gitcat_test2.git success2.c 0e16bc26f432
 
-**Now the .pdb files will contain instructions how to fetch the correct source
-files**
+You should get the content of sucess2.c, and you will have a clone of the
+git repo in the folder given by SIMUR_REPO_CACHE (or C:\simur_repo if you did
+not set it)
+
+- Test for Subversion:
+> vcget.cmd svn https://svn.riouxsvn.com/svncat_test1/trunk main.c 6
+
+For Subversion SIMuR do not populate the SIMUR_REPO_CACHE, it will use 'svn cat'
+
+- Test on you own sources
+> processPDBs.py 'dir-with-pdbs' 'srcsrv-dir'
+
+**Now the .pdb files should contain instructions how to fetch the correct source
+files, which you can see by running**
+
+> "C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\srcsrv\pdbstr.exe" -r -p:TestGitCat.pdb -s:srcsrv
+
+and it should look something like
 
     VERSION=1
     VERCTL=SvnGit
@@ -32,21 +48,7 @@ files**
     C:\wrk\SIMuR\GitHub\SIMuR\test\src\fromRiouxSVN\trunk\main.c*svn*https://svn.riouxsvn.com/svncat_test1/trunk*main.c*6*3416941a16288d58f71b557766b8d92153aa00f0
     C:\wrk\SIMuR\GitHub\SIMuR\test\src\fromGitHub\gitcat_test2\success2.c*git*https://github.com/NilssonOpel/gitcat_test2.git*success2.c*0e16bc26f4327eb4a1607c42a2c1011e4c670e5d*0e16bc26f4327eb4a1607c42a2c1011e4c670e5d
 
-- Test to call
-> vcget.cmd git https://github.com/NilssonOpel/gitcat_test2.git  success2.c 0e16bc26f432
-
-which will call
-> python "your root"\script\vcget.py git https://github.com/NilssonOpel/gitcat_test2.git success2.c 0e16bc26f432
-
-You would now see the content of sucess2.c, and you will have a git repo in the
-folder given by SIMUR_REPO_CACHE (or C:\simur_repo if you did not set it)
-
-Or test it for Subversion:
-> vcget.cmd svn https://svn.riouxsvn.com/svncat_test1/trunk main.c 6
-
-Subversion do not populate the SIMUR_REPO_CACHE, it uses will use 'svn cat'
-
-Did it not work out?  Then proceed to 'To test it'
+Did it not work out?  Then try:
 
 ## To test it
 
@@ -59,11 +61,22 @@ If you have these installed
 - Debugging Tools for Windows,
 https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/index
 
-then you can easily test it by going to the directory test/ and run ***SetUp.bat***
+*There is an issue with Win10 that JIT debugging is by default disabled.  Since
+the test program have a crash, this has to be enabled.  The crash is to get into
+the debugger and to show that the debugger can pick up the remote sources*.
+
+To enable JIT debugging please take a look at
+https://docs.microsoft.com/en-us/visualstudio/debugger/debug-using-the-just-in-time-debugger?view=vs-2019
+
+- Test it by going to the directory test/ and run ***SetUp.bat***
+
+It should eventually break into your debugger if you have JIT Debugging enabled,
+see above
+
 
 ## How it started
 
-To get the sources from subversion is so easy, just use **svn cat
+To get the source code from subversion is easy, just use **svn cat
 url@revision**.  But when you work with git you must do something
 else.  So my naive idea was to clone all the repositories into a local
 directory (set by environment variable ***SIMUR_REPO_CACHE***) and use
