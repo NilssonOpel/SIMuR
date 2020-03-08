@@ -88,6 +88,7 @@ def get_non_indexed(root, srcsrv):
 #
 #-------------------------------------------------------------------------------
 def is_in_svn(file, data, svn_cache):
+    debug_level = 0
     for cached_dir in svn_cache.keys():         # dict on svn roots
         # Since svn may have externals this may fail if we have a narrower root
         if file.startswith(cached_dir):
@@ -95,7 +96,8 @@ def is_in_svn(file, data, svn_cache):
             svn_content = svn_cache[cached_dir] # dict on abs path file
             if file in svn_content.keys():
                 copy_cache_response(data, svn_content[file])
-#                print(f'Found in cache: {file}')
+                if debug_level > 4:
+                    print(f'Found in cache: {file}')
                 return True
 
     svn_dir = get_root_dir(file, '.svn')
@@ -103,18 +105,21 @@ def is_in_svn(file, data, svn_cache):
         return False
 
     if str(svn_dir) in svn_cache.keys():
-#        print(f'Already cached {svn_dir} - {file}')
+        if debug_level > 4:
+            print(f'Already cached {svn_dir} - {file}')
         return False
 
     # Make a pushd to the svn dir
     curr_dir = os.getcwd()
     os.chdir(svn_dir)
 
-#    print(f'svn-caching: {svn_dir} - {file}')
+    if debug_level > 4:
+        print(f'svn-caching: {svn_dir} - {file}')
     commando = f'svn info -R'
     reply = simur.run_process(commando, True)
     if len(reply) < 2:
-#        print(f'svn info returned: {reply}')
+        if debug_level > 4:
+            print(f'svn info returned: {reply}')
         os.chdir(curr_dir)
         return False
 
@@ -146,22 +151,25 @@ def is_in_svn(file, data, svn_cache):
     path = rev = sha = node_kind = None
     while curr_line < no_of_lines:
         line = lines[curr_line]
-#        print(f'IN: {hits} {line}')
+        if debug_level > 4:
+            print(f'IN: {hits} {line}')
         curr_line += 1
 
         if hits >= 3 or curr_line >= no_of_lines or len(line) == 0:
             # Make the key
-#            print(f'hits; {hits}')
-#            print(f'cnt ; {curr_line}:{no_of_lines}')
-#            print(f'len ; {len(line)}')
-#            if not url:
-#                print(f"No url")
-#            if not path:
-#                print(f"No path")
-#            if not rev:
-#                print(f"No revh")
-#            if not sha:
-#                print(f"No sha")
+            if debug_level > 4:
+                print(f'hits; {hits}')
+                print(f'cnt ; {curr_line}:{no_of_lines}')
+                print(f'len ; {len(line)}')
+                if not url:
+                    print(f"No url")
+                if not path:
+                    print(f"No path")
+                if not rev:
+                    print(f"No revh")
+                if not sha:
+                    print(f"No sha")
+
             if not path:
                 path = 'None'
                 node_kind = 'went_wrong'
@@ -171,7 +179,8 @@ def is_in_svn(file, data, svn_cache):
                 key = os.path.join(svn_dir, path)
                 key = Path(key).resolve()
             except:
-#                print(f'cannot handle the path')
+                if debug_level > 4:
+                    print(f'cannot handle the path')
                 # Incapacitate in case we encounter them in the future
                 path = 'throw_on_path'
                 key  = 'throw_on_key'
@@ -183,16 +192,17 @@ def is_in_svn(file, data, svn_cache):
                 cache_entry = {}
                 disk_rel = os.path.relpath(path)
                 url_rel = disk_rel.replace('\\', '/')   # since disk_rel is str
-#                url_rel  = disk_rel.as_posix()         # to get forward slashes
                 cache_entry['reporoot'] = url
                 cache_entry['relpath']  = url_rel
                 cache_entry['revision'] = rev
                 cache_entry['sha1']  = sha
                 cache_entry['vcs'] = 'svn'
                 dir_cache[key] = cache_entry
-#                print(f'Inserts: {key}')
-#            else:
-#                print(f'Skips: {node_kind} - {path}')
+                if debug_level > 4:
+                    print(f'Inserts: {key}')
+            else:
+                if debug_level > 4:
+                    print(f'Skips: {node_kind} - {path}')
 
             path = rev = sha = node_kind = None
             hits = 0
@@ -220,6 +230,7 @@ def is_in_svn(file, data, svn_cache):
 #
 #-------------------------------------------------------------------------------
 def is_in_svn_raw(file, data, dummy):
+    debug_level = 0
     svn_dir = get_root_dir(file, '.svn')
     if svn_dir == None:
         return False
@@ -244,7 +255,8 @@ def is_in_svn_raw(file, data, dummy):
     lines = reply.splitlines()
     hits = 0
     for line in lines:
-#        print(line)
+        if debug_level > 4:
+            print(line)
         # Just check if we get an URL: but we ignore what it says
         url = line.startswith('URL: ')
         if url:
@@ -274,13 +286,15 @@ def is_in_svn_raw(file, data, dummy):
 #
 #-------------------------------------------------------------------------------
 def get_root_dir(path, ext):
+    debug_level = 0
     # Add a cache for those directories that are not git-ish
     # and also for those that are
     dir = os.path.dirname(path)
 
     curr_dir = os.path.realpath(dir)
     while True:
-#        print(f'Looking at {curr_dir}')
+        if debug_level > 4:
+            print(f'Looking at {curr_dir}')
         a_root = os.path.join(curr_dir, ext)
         if os.path.exists(a_root):
             break
@@ -309,6 +323,7 @@ def copy_cache_response(data, response):  # why do I need to do this ?
 #
 #-------------------------------------------------------------------------------
 def is_in_git(file, data, git_cache):
+    debug_level = 0
     report_fail = lambda dir, command: \
         f'When executing in directory: {dir}\n>{command} failed'
 
@@ -318,9 +333,10 @@ def is_in_git(file, data, git_cache):
             if file in git_content.keys():
                 copy_cache_response(data, git_content[file])
                 return True
-#            else:
-#                print(f'in cached directory {cached_dir}:')
-#                print(f'  {file} was not found')
+            else:
+                if debug_level > 4:
+                    print(f'in cached directory {cached_dir}:')
+                    print(f'  {file} was not found')
 
     git_dir = get_git_dir(file)
     if git_dir == None:
@@ -330,7 +346,8 @@ def is_in_git(file, data, git_cache):
     curr_dir = os.getcwd()
     os.chdir(git_dir)
 
-#    print(f'git-caching: {git_dir}')
+    if debug_level > 4:
+        print(f'git-caching: {git_dir}')
 
     #Look for remote:s
     commando = 'git remote -v'
@@ -368,7 +385,8 @@ def is_in_git(file, data, git_cache):
             try:
                 key = Path(key).resolve()
             except:
-#                print(f'cannot handle {line}')
+                if debug_level > 4:
+                    print(f'cannot handle {line}')
                 continue
             key = str(key)  # json cannot have WindowsPath as key
             dir_cache[key] = {}
@@ -399,6 +417,7 @@ def is_in_git(file, data, git_cache):
 #
 #-------------------------------------------------------------------------------
 def is_in_git_raw(file, data, dummy):
+    debug_level = 0
     report_fail = lambda dir, command: \
         f'When executing in directory: {dir}\n>{command} failed'
 
@@ -416,11 +435,13 @@ def is_in_git_raw(file, data, dummy):
         os.chdir(curr_dir)
         return False
     if reply.startswith('fatal'): # fatal: not a git repository ...
-#        report_fail(curr_dir, commando)    so it is not a fail
+        if debug_level > 4:
+            print(report_fail(curr_dir, commando)) # so it is not a fail
         os.chdir(curr_dir)
         return False
     reply = reply.rstrip()
-#    print(f'GIT: |{reply}|')
+    if debug_level > 4:
+        print(f'GIT: |{reply}|')
     repo = re.match(r'^(\d+)\s*([a-fA-F0-9]+)\s*(\d+)\s*(.+)$', reply)
     if repo:
         data['reporoot'] = str(git_dir)
@@ -609,6 +630,7 @@ def make_stream_file(pdb_file, stream):
 #
 #-------------------------------------------------------------------------------
 def dump_stream_to_pdb(pdb_file, srcsrv, stream):
+    debug_level = 0
     tempfile = make_stream_file(pdb_file, stream)
 # To restore the pdb:s
 #---
@@ -620,7 +642,8 @@ def dump_stream_to_pdb(pdb_file, srcsrv, stream):
 #ren %1 %2
 #popd
 #---
-#    make_backup_file(pdb_file, '.orig')
+    if debug_level > 4:
+        make_backup_file(pdb_file, '.orig')
     pdbstr = os.path.join(srcsrv, 'pdbstr.exe')
     commando = f'{pdbstr} -w -s:srcsrv -p:{pdb_file} -i:{tempfile}'
     simur.run_process(commando, True)

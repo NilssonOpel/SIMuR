@@ -126,7 +126,8 @@ def main():
             git_cache,
             debug_level)
         print(f'---\n')
-#    simur.store_json_data(cache_file, vcs_cache)
+    if debug_level > 4:
+        simur.store_json_data(cache_file, vcs_cache)
     end = time.time()
     make_log(srcsrv, end-start)
     return outcome
