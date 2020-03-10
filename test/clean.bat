@@ -1,9 +1,12 @@
 @echo off
 setlocal
 call variables.bat
-rd /s /q build
+rd /s /q %BUILD_DIR%
+rd /s /q %BUILD_LIB_DIR%
 rd /s /q %ROOT%
+rd /s /q %LIB_ROOT%
 rd /s /q hidden_%ROOT%
+rd /s /q hidden_%LIB_ROOT%
 
 :: and maybe also
 rd /s /q %LOCALAPPDATA%\Sourceserver

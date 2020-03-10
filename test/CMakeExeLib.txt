@@ -1,0 +1,13 @@
+project(TestExeCat)
+
+# Just go on the defaults and then use RelWithDebInfo to test
+
+set(Sources
+  fromRiouxSVN/trunk/main.c
+)
+
+add_executable(TestGitCat ${Sources})
+
+target_link_libraries(TestGitCat
+  ${CMAKE_CURRENT_LIST_DIR}/../${MY_LIB_DIR}/TestLibCat
+)
