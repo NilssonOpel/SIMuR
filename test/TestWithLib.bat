@@ -58,6 +58,7 @@ cmake %LIB_ROOT%\CMakelists.txt -B %BUILD_LIB_DIR%
 cmake --build %BUILD_LIB_DIR% --config %CONFIG%
 
 python ..\script\processPDBs.py %BUILD_LIB_DIR%\%CONFIG%\
+if ERRORLEVEL 1 goto FAIL
 
 :: Hide the lib sources
 move %LIB_ROOT% hidden_%LIB_ROOT%
