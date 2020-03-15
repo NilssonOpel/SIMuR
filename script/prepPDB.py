@@ -5,6 +5,7 @@ import re
 import shutil
 import sys
 
+import libSrcTool
 import simur
 
 #-------------------------------------------------------------------------------
@@ -70,7 +71,7 @@ def is_indexed(root, srcsrv):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def get_non_indexed(root, srcsrv):
+def get_non_indexed(root, srcsrv, vcs_cache):
     srctool = os.path.join(srcsrv, 'srctool.exe')
     commando = f'{srctool} -r {root}'
     # srctool returns the number of files - not an exit code
@@ -80,6 +81,8 @@ def get_non_indexed(root, srcsrv):
     for file in all_files:
         canonical_path = os.path.realpath(file)
         if os.path.isfile(canonical_path):
+            files.append(canonical_path)
+        if file in vcs_cache.keys():
             files.append(canonical_path)
 
     return files
@@ -614,6 +617,14 @@ def make_backup_file(src_file, extension):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
+def make_cache_file(pdb_file):
+    common_root, ext = os.path.splitext(pdb_file)
+    cache_file = common_root + '.simur.json'
+    return cache_file
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
 def make_stream_file(pdb_file, stream):
     tempfile = os.path.basename(pdb_file)
     tempfile = tempfile + '.stream'
@@ -649,6 +660,13 @@ def dump_stream_to_pdb(pdb_file, srcsrv, stream):
     simur.run_process(commando, True)
 
     os.remove(tempfile)                 # Or keep it for debugging
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
+def write_cache_file(pdb_file, vcs_data):
+    cache_file = make_cache_file(pdb_file)
+    simur.store_json_data(cache_file, vcs_data)
 
 #-------------------------------------------------------------------------------
 #
@@ -705,6 +723,35 @@ def check_indexed(root, srcsrv):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
+def check_indexed_lib(pdb):
+    # Heuristic: is there a 'cache file' that is newer than the base.pdb
+    composed_prep = make_cache_file(pdb)
+    if os.path.exists(composed_prep):
+        prep_mod_time = os.path.getatime(composed_prep)
+        pdb_mod_time  = os.path.getatime(pdb)
+        if prep_mod_time >= pdb_mod_time:
+            lib_data_file = composed_prep
+#            print(f'Using {lib_data_file}')
+            return lib_data_file
+
+    return ""
+
+#-------------------------------------------------------------------------------
+# Insert VCS data from static library
+#-------------------------------------------------------------------------------
+def merge_vcs_data(vcs_cache, lib_data_file):
+    lib_data = simur.load_json_data(lib_data_file)
+    # Should we check if we overwrite anything?  But how do we know which one is
+    # correct when getting data from a static library
+#    print(f'Merge from {lib_data_file}')
+#    dump_vcsdata(lib_data)
+    vcs_cache.update(lib_data)
+#    print(f'Outcome:')
+#    dump_vcsdata(vcs_cache)
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
 def check_requirements(root, srcsrv):
     if check_paths(root):
         return 3
@@ -727,9 +774,9 @@ def make_time_stamp(text, debug):
     print(f'{instant}: {text}')
 
 #-------------------------------------------------------------------------------
-#
+# Handle PDB:s for executables (*.exe, *.dll)
 #-------------------------------------------------------------------------------
-def do_the_job(root, srcsrv, vcs_cache, svn_cache, git_cache, debug=0):
+def prep_exe_pdb(root, srcsrv, vcs_cache, svn_cache, git_cache, debug=0):
     already_indexed = check_indexed(root, srcsrv)
     if already_indexed:
         return 0
@@ -738,13 +785,13 @@ def do_the_job(root, srcsrv, vcs_cache, svn_cache, git_cache, debug=0):
     if failing_requirements:
         return failing_requirements
 
-    make_time_stamp('prepPDB START', debug)
+    make_time_stamp('prep_exe_pbd START', debug)
     if debug > 3:
-        print('prepPDB START')
+        print('prep_exe_pbd START')
 
     make_time_stamp('get_non_indexed', debug)
-    files = get_non_indexed(root, srcsrv)
-    if not files:
+    files = get_non_indexed(root, srcsrv, vcs_cache)
+    if len(files) == 0:
         print(f'No files to index in {root}')
         return 0
 
@@ -774,8 +821,48 @@ def do_the_job(root, srcsrv, vcs_cache, svn_cache, git_cache, debug=0):
         make_time_stamp('report_vcsdata', debug)
         report_vcsdata(vcs_data)
     if debug > 3:
-        print('prepPDB END')
-    make_time_stamp('prepPDB END', debug)
+        print('prep_exe_pbd END')
+    make_time_stamp('prep_exe_pbd END', debug)
+
+    return 0
+
+#-------------------------------------------------------------------------------
+# Handle PDB:s for static libraries (*.lib)
+#-------------------------------------------------------------------------------
+def prep_lib_pdb(root, srcsrv, cvdump, vcs_cache, svn_cache, git_cache, debug=0):
+    lib_data_file = check_indexed_lib(root)
+    if len(lib_data_file):
+        # OK, so add data from that file to our current understanding
+        print(f'{root} already indexed - taking cached data from {lib_data_file}')
+        merge_vcs_data(vcs_cache, lib_data_file)
+        return 0
+
+    make_time_stamp('prep_lib_pbd START', debug)
+    files = libSrcTool.get_lib_source_files(root, cvdump, srcsrv)
+    if len(files) == 0:
+        print(f'No files to index in {root} for static lib')
+        return 0
+
+    print(f'Found {len(files)} source {plural_files(len(files))}')
+
+    if debug > 3:
+        for file in files:
+            print(file)
+
+    make_time_stamp('get_vcs_information', debug)
+    vcs_data = get_vcs_information(files, vcs_cache, svn_cache, git_cache)
+    if not vcs_data:
+        print(f'No version controlled files in {root}')
+    else:
+        if debug > 3:
+            dump_vcsdata(vcs_data)
+
+        write_cache_file(root, vcs_data)
+        report_vcsdata(vcs_data)
+
+    if debug > 3:
+        print('prep_lib_pbd END')
+    make_time_stamp('prep_lib_pbd END', debug)
 
     return 0
 

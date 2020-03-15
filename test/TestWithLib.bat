@@ -57,12 +57,16 @@ copy CMakeLib.txt %LIB_ROOT%\CMakeLists.txt
 cmake %LIB_ROOT%\CMakelists.txt -B %BUILD_LIB_DIR%
 cmake --build %BUILD_LIB_DIR% --config %CONFIG%
 
+python ..\script\processPDBs.py %BUILD_LIB_DIR%\%CONFIG%\
+
 :: Hide the lib sources
 move %LIB_ROOT% hidden_%LIB_ROOT%
 
 :: Make the .exe with a .pdb
 copy CMakeExeLib.txt %ROOT%\CMakeLists.txt
-cmake %ROOT%\CMakelists.txt -B %BUILD_DIR% -DMY_LIB_DIR=%BUILD_LIB_DIR%/%CONFIG%
+mkdir %BUILD_DIR%\%CONFIG%
+copy %BUILD_LIB_DIR%\%CONFIG% %BUILD_DIR%\%CONFIG%
+cmake %ROOT%\CMakelists.txt -B %BUILD_DIR% -DMY_LIB_DIR=%BUILD_DIR%/%CONFIG%
 cmake --build %BUILD_DIR% --config %CONFIG%
 
 :: Source index the .pdb

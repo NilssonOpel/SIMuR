@@ -5,6 +5,7 @@ import simur
 import sys
 import time
 
+import libSrcTool
 import prepPDB
 
 #-------------------------------------------------------------------------------
@@ -32,6 +33,32 @@ def list_all_files(directory, ext):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
+def filter_pdbs(pdbs, cvdump, srcsrv):
+    lib_pdbs = []
+    exe_pdbs = []
+    for pdb_file in pdbs:
+        # First exclude the default vcNNN.pdb files, they are from the compiler
+        internal_pdb = re.match(r'.*\\vc\d+\.pdb$', pdb_file)
+        if internal_pdb:
+            print(f'Skipping {pdb_file}')
+            continue
+        # First check if srctool returns anything - then it is NOT a lib-PDB
+        exe_files = prepPDB.get_non_indexed(pdb_file, srcsrv, {})
+        if len(exe_files):
+            exe_pdbs.append(pdb_file)
+        else:
+            commando = f'{cvdump} {pdb_file}'
+            raw_data = simur.run_process(commando, True)
+
+            files = libSrcTool.process_raw_cvdump_data(raw_data)
+            if len(files):
+                lib_pdbs.append(pdb_file)
+
+    return lib_pdbs, exe_pdbs
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
 def get_available_bins(bins_in):
     bins_found = []
     bins_not  = []
@@ -53,6 +80,7 @@ def make_log(srcsrv, elapsed):
         os.path.join(srcsrv, 'pdbstr.exe'),
     ]
     maybe_bins = [
+        'cvdump.exe',
         'git.exe',
         'svn.exe',
         'hg.exe'
@@ -97,16 +125,24 @@ def main():
         usage()
         exit(3)
     root = sys.argv[1]
+    cvdump = 'cvdump.exe'
     srcsrv = 'C:\\Program Files (x86)\\Windows Kits\\10\\Debuggers\\x64\\srcsrv'
     if len(sys.argv) > 2:
         srcsrv = sys.argv[2]
     if prepPDB.check_winkits(srcsrv):
         return 3
 
+    if len(sys.argv) > 3:
+        cvdump = sys.argv[3]
+    if libSrcTool.check_cvdump(cvdump):
+        return 3
+
     pdbs = list_all_files(root, ".pdb")
     if len(pdbs) == 0:
         print(f'No PDB:s found in directory {root}')
         return 3
+
+    lib_pdbs, exe_pdbs = filter_pdbs(pdbs, cvdump, srcsrv)
 
     outcome = 0
     cache_file = os.path.join(root, 'vcs_cache.json')
@@ -117,9 +153,19 @@ def main():
     svn_cache = {}
     git_cache = {}
 
-    for pdb in pdbs:
-        print(f'---\nProcessing {pdb}')
-        outcome += prepPDB.do_the_job(pdb,
+    for lib_pdb in lib_pdbs:
+        print(f'---\nProcessing library {lib_pdb}')
+        outcome += prepPDB.prep_lib_pdb(lib_pdb,
+            srcsrv,
+            cvdump,
+            vcs_cache,
+            svn_cache,
+            git_cache,
+            debug_level)
+
+    for exe_pdb in exe_pdbs:
+        print(f'---\nProcessing executable {exe_pdb}')
+        outcome += prepPDB.prep_exe_pdb(exe_pdb,
             srcsrv,
             vcs_cache,
             svn_cache,
