@@ -12,7 +12,8 @@ import prepPDB
 #
 #-------------------------------------------------------------------------------
 def about_cvdump():
-    print('  You need to have cvdump.exe in your path - you can find it here:')
+    print('  You need to have cvdump.exe in your path to index static libraries')
+    print('  - you can find it here:')
     print('  https://github.com/microsoft/microsoft-pdb/blob/master/cvdump/cvdump.exe')
 
 #-------------------------------------------------------------------------------
@@ -93,15 +94,10 @@ def get_lib_source_files(pdb_file, cvdump, srcsrv):
 #
 #-------------------------------------------------------------------------------
 def check_cvdump(cvdump):
-    return_value = 0
-    reply = shutil.which(cvdump)
-    if reply == None:
+    cvdump = shutil.which(cvdump)
+    if cvdump == None:
         about_cvdump()
-        return 3
-    else:
-        cvdump = reply
-
-    return 0
+    return cvdump
 
 #-------------------------------------------------------------------------------
 #

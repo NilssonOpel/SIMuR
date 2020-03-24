@@ -46,7 +46,7 @@ def filter_pdbs(pdbs, cvdump, srcsrv):
         exe_files = prepPDB.get_non_indexed(pdb_file, srcsrv, {})
         if len(exe_files):
             exe_pdbs.append(pdb_file)
-        else:
+        elif cvdump:
             commando = f'{cvdump} {pdb_file}'
             raw_data = simur.run_process(commando, True)
 
@@ -134,14 +134,14 @@ def main():
 
     if len(sys.argv) > 3:
         cvdump = sys.argv[3]
-    if libSrcTool.check_cvdump(cvdump):
-        return 3
+    cvdump = libSrcTool.check_cvdump(cvdump)
 
     pdbs = list_all_files(root, ".pdb")
     if len(pdbs) == 0:
         print(f'No PDB:s found in directory {root}')
         return 3
 
+    # If there is no cvdump, then we won't filter out an lib_pdbs either
     lib_pdbs, exe_pdbs = filter_pdbs(pdbs, cvdump, srcsrv)
 
     outcome = 0
@@ -176,6 +176,20 @@ def main():
         simur.store_json_data(cache_file, vcs_cache)
     end = time.time()
     make_log(srcsrv, end-start)
+    # Store the directories where we found our 'roots'
+    # This can be used for checking if we have un-committed changes
+    roots = {}
+    roots["svn"] = prepPDB.extract_repo_roots(svn_cache)
+    roots["git"] = prepPDB.extract_repo_roots(git_cache)
+    repo_file = os.path.join(root, 'repo_roots.json')
+    simur.store_json_data(repo_file, roots)
+
+    if debug_level > 4:
+        svn_file = os.path.join(root, 'svn_cache.json')
+        simur.store_json_data(svn_file, svn_cache)
+        git_file = os.path.join(root, 'git_cache.json')
+        simur.store_json_data(git_file, git_cache)
+
     return outcome
 
 #-------------------------------------------------------------------------------

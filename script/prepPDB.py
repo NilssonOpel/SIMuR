@@ -869,6 +869,16 @@ def prep_lib_pdb(root, srcsrv, cvdump, vcs_cache, svn_cache, git_cache, debug=0)
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
+def extract_repo_roots(the_cache):
+    roots = []
+    for the_dir in the_cache.keys():
+        roots.append(the_dir)
+
+    return roots
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
 def verify_cache_data(vcs_cache):
     # turned out to be cheaper to update than verify
     new_data = {}
