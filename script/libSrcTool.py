@@ -94,9 +94,14 @@ def get_lib_source_files(pdb_file, cvdump, srcsrv):
 #
 #-------------------------------------------------------------------------------
 def check_cvdump(cvdump):
+    second_try = cvdump
     cvdump = shutil.which(cvdump)
+    if cvdump_ == None:
+        # Not in path, try once more in 'this' directory
+        cvdump = shutil.which(second_try, path = os.path.dirname(os.path.abspath(__file__)))
     if cvdump == None:
         about_cvdump()
+
     return cvdump
 
 #-------------------------------------------------------------------------------
