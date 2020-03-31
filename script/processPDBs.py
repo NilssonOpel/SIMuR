@@ -65,6 +65,10 @@ def get_available_bins(bins_in):
     for the_bin in bins_in:
         reply = shutil.which(the_bin)
         if reply == None:
+            # Not in path, try once more in 'this' directory
+            reply = shutil.which(the_bin, path = os.path.dirname(os.path.abspath(__file__)))
+
+        if reply == None:
             bins_not.append(the_bin)
         else:
             bins_found.append(reply)
