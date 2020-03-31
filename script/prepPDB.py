@@ -727,11 +727,10 @@ def check_indexed_lib(pdb):
     # Heuristic: is there a 'cache file' that is newer than the base.pdb
     composed_prep = make_cache_file(pdb)
     if os.path.exists(composed_prep):
-        prep_mod_time = os.path.getatime(composed_prep)
-        pdb_mod_time  = os.path.getatime(pdb)
+        prep_mod_time = os.path.getmtime(composed_prep)
+        pdb_mod_time  = os.path.getmtime(pdb)
         if prep_mod_time >= pdb_mod_time:
             lib_data_file = composed_prep
-#            print(f'Using {lib_data_file}')
             return lib_data_file
 
     return ""
