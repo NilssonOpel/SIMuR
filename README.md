@@ -68,7 +68,8 @@ the debugger and to show that the debugger can pick up the remote sources*.
 To enable JIT debugging please take a look at
 https://docs.microsoft.com/en-us/visualstudio/debugger/debug-using-the-just-in-time-debugger?view=vs-2019
 
-- Test it by going to the directory test/ and run ***SetUp.bat***
+- Test it by going to the directory test/ and run ***TestExe.bat*** or
+***TestWithLib.bat***
 
 It should eventually break into your debugger if you have JIT Debugging enabled,
 see above
