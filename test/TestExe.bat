@@ -5,20 +5,22 @@ mkdir %svn_local%
 mkdir %git_local%
 
 pushd %svn_local%
-if exist %SVN1% (
-  svn update %SVN1%
+if exist %svn_dir% (
+  svn update %svn_dir%
 ) else (
   svn co %SVN1%
 )
 popd
 
 pushd %git_local%
-if exist %GIT1% (
+if exist %git_dir1% (
+  cd %git_dir1%
   git pull %GIT1%
 ) else (
   git clone %GIT1%
 )
-if exist %GIT2% (
+if exist %git_dir2% (
+  cd %git_dir2%
   git pull %GIT2%
 ) else (
   git clone %GIT2%
