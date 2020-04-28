@@ -9,6 +9,7 @@ try:
 except ModuleNotFoundError:
     got_win32api = False
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -32,11 +33,11 @@ def ccp():
 def run_process(command, do_check, extra_dir=os.getcwd()):
     try:
         status = subprocess.run(command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            encoding=ccp(),     # See https://bugs.python.org/issue27179
-            check=do_check)
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                text=True,
+                                encoding=ccp(),  # See https://bugs.python.org/issue27179
+                                check=do_check)
         if status.returncode == 0:
             reply = status.stdout
         else:
@@ -55,6 +56,7 @@ def run_process(command, do_check, extra_dir=os.getcwd()):
 
     return reply
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -63,6 +65,7 @@ def my_mkdir(the_dir):
         os.mkdir(the_dir)
     the_dir = os.path.realpath(the_dir)
     return the_dir
+
 
 #-------------------------------------------------------------------------------
 #
@@ -80,6 +83,7 @@ def get_repo_cache_dir():
 
     return repo_cache
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -89,6 +93,7 @@ def get_repo_cache_file(name):
 
     return cache_file
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -96,6 +101,7 @@ def get_presoak_file():
     presoak_file = get_repo_cache_file('presoak.json')
 
     return presoak_file
+
 
 #-------------------------------------------------------------------------------
 #
@@ -113,12 +119,14 @@ def load_json_data(file):
 
     return data
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
 def store_json_data(file, data):
     with open(file, 'w') as fp:
         json.dump(data, fp, indent=2)
+
 
 #-------------------------------------------------------------------------------
 #
@@ -130,6 +138,7 @@ def get_the_git_dir(start_dir, find_dir):
             return os.path.join(root, find_dir)
     return
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -138,7 +147,7 @@ def find_and_update_git_cache(reporoot):
     # may be called from all kind of debugging tools
     global_repo = get_repo_cache_dir()
 
-    reporoot_as_bytes = reporoot.encode() # default utf-8
+    reporoot_as_bytes = reporoot.encode()  # default utf-8
     repo_dir = hashlib.sha1(reporoot_as_bytes).hexdigest()
     subdir = os.path.join(global_repo, repo_dir)
     global_repo = my_mkdir(subdir)
@@ -154,7 +163,7 @@ def find_and_update_git_cache(reporoot):
         run_process(command, True, git_dir)
     else:
         command = f'git clone {reporoot}'
-        reply = run_process(command, True, global_repo)
+        run_process(command, True, global_repo)
         git_dir = get_the_git_dir(global_repo, '.git')
 
     # Update the dictionary of reporoot and the sha1 so we can have a 'presoak'
@@ -178,21 +187,23 @@ def find_and_update_git_cache(reporoot):
 
     return git_dir
 
+
 #-------------------------------------------------------------------------------
 # Shamelessly stolen from:
-# https://stackoverflow.com/questions/580924/python-windows-file-version-attribute
+# https://stackoverflow.com/questions/580924/
+#         python-windows-file-version-attribute
 #-------------------------------------------------------------------------------
 def getFileProperties(fname):
     """
     Read all properties of the given file return them as a dictionary.
     """
-    if got_win32api == False:
+    if got_win32api is False:
         return None
 
     propNames = ('Comments', 'InternalName', 'ProductName',
-        'CompanyName', 'LegalCopyright', 'ProductVersion',
-        'FileDescription', 'LegalTrademarks', 'PrivateBuild',
-        'FileVersion', 'OriginalFilename', 'SpecialBuild')
+                 'CompanyName', 'LegalCopyright', 'ProductVersion',
+                 'FileDescription', 'LegalTrademarks', 'PrivateBuild',
+                 'FileVersion', 'OriginalFilename', 'SpecialBuild')
 
     props = {'FixedFileInfo': None, 'StringFileInfo': None, 'FileVersion': None}
 
@@ -201,9 +212,12 @@ def getFileProperties(fname):
         # corresponding to VS_FIXEDFILEINFO struc
         fixedInfo = win32api.GetFileVersionInfo(fname, '\\')
         props['FixedFileInfo'] = fixedInfo
-        props['FileVersion'] = "%d.%d.%d.%d" % (fixedInfo['FileVersionMS'] / 65536,
-                fixedInfo['FileVersionMS'] % 65536, fixedInfo['FileVersionLS'] / 65536,
-                fixedInfo['FileVersionLS'] % 65536)
+        props['FileVersion'] = "%d.%d.%d.%d" % (
+                               fixedInfo['FileVersionMS'] / 65536,
+                               fixedInfo['FileVersionMS'] % 65536,
+                               fixedInfo['FileVersionLS'] / 65536,
+                               fixedInfo['FileVersionLS'] % 65536
+                           )
 
         # \VarFileInfo\Translation returns list of available (language, codepage)
         # pairs that can be used to retreive string info. We are using only the first pair.
@@ -215,7 +229,7 @@ def getFileProperties(fname):
         strInfo = {}
         for propName in propNames:
             strInfoPath = u'\\StringFileInfo\\%04X%04X\\%s' % (lang, codepage, propName)
-            ## print str_info
+            # print str_info
             strInfo[propName] = win32api.GetFileVersionInfo(fname, strInfoPath)
 
         props['StringFileInfo'] = strInfo

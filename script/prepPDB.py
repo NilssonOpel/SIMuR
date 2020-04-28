@@ -8,12 +8,14 @@ import sys
 import libSrcTool
 import simur
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
 def usage():
     print(f'{sys.argv[0]} pdb-file srcsrv-dir')
     print(f'  e.g. {sys.argv[0]} RelWithDebInfo/TestGitCat.pdb C:/WinKits/10/Debuggers/x64/srcsrv')
+
 
 #-------------------------------------------------------------------------------
 # --- Routines for extracting the data from the pdb and associated vcs:s ---
@@ -26,14 +28,12 @@ def skip_file(file):
     skipping_dirs = [
         "c:\\program files",
         "C:\\Program Files",
-#        "f:\\dd\vctools",
-#        "f:\\dd\externalsapis",
     ]
     dir_contains = [
-#        "build",
+        # "build",
     ]
     skipping_extensions = [
-#        ".tmp"
+        # ".tmp"
     ]
 
     dir = os.path.dirname(file)
@@ -52,6 +52,7 @@ def skip_file(file):
 
     return False
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -67,6 +68,7 @@ def is_indexed(root, srcsrv):
     if len(reply) == 0:
         return False
     return True
+
 
 #-------------------------------------------------------------------------------
 #
@@ -87,16 +89,16 @@ def get_non_indexed(root, srcsrv, vcs_cache):
 
     return files
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
 def is_in_svn(file, data, svn_cache):
     debug_level = 0
-    for cached_dir in svn_cache.keys():         # dict on svn roots
+    for cached_dir in svn_cache.keys():          # dict on svn roots
         # Since svn may have externals this may fail if we have a narrower root
         if file.startswith(cached_dir):
-            descended_into_cache_dir = cached_dir
-            svn_content = svn_cache[cached_dir] # dict on abs path file
+            svn_content = svn_cache[cached_dir]  # dict on abs path file
             if file in svn_content.keys():
                 copy_cache_response(data, svn_content[file])
                 if debug_level > 4:
@@ -104,7 +106,7 @@ def is_in_svn(file, data, svn_cache):
                 return True
 
     svn_dir = get_root_dir(file, '.svn')
-    if svn_dir == None:
+    if svn_dir is None:
         return False
 
     if str(svn_dir) in svn_cache.keys():
@@ -176,7 +178,7 @@ def is_in_svn(file, data, svn_cache):
             if not path:
                 path = 'None'
                 node_kind = 'went_wrong'
-            if not (url and rev and (sha or node_kind)): # DeLorean
+            if not (url and rev and (sha or node_kind)):  # DeLorean
                 node_kind = 'went_wrong'
             try:
                 key = os.path.join(svn_dir, path)
@@ -229,13 +231,14 @@ def is_in_svn(file, data, svn_cache):
         return True
     return False
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
 def is_in_svn_raw(file, data, dummy):
     debug_level = 0
     svn_dir = get_root_dir(file, '.svn')
-    if svn_dir == None:
+    if svn_dir is None:
         return False
 
     # Make a pushd to the svn dir
@@ -274,7 +277,7 @@ def is_in_svn_raw(file, data, dummy):
             continue
         sha1 = re.match(r'^Checksum: ([a-fA-F0-9]+)$', line)
         if sha1:
-            data['sha1']  = sha1.group(1)
+            data['sha1'] = sha1.group(1)
             hits += 1
             continue
 
@@ -284,6 +287,7 @@ def is_in_svn_raw(file, data, dummy):
 
     data['vcs'] = 'svn'
     return True
+
 
 #-------------------------------------------------------------------------------
 #
@@ -309,11 +313,13 @@ def get_root_dir(path, ext):
     curr_dir = Path(curr_dir).resolve()
     return curr_dir
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
 def get_git_dir(path):
     return get_root_dir(path, '.git')
+
 
 #-------------------------------------------------------------------------------
 #
@@ -321,6 +327,7 @@ def get_git_dir(path):
 def copy_cache_response(data, response):  # why do I need to do this ?
     for key in response.keys():
         data[key] = response[key]
+
 
 #-------------------------------------------------------------------------------
 #
@@ -330,9 +337,9 @@ def is_in_git(file, data, git_cache):
     report_fail = lambda dir, command: \
         f'When executing in directory: {dir}\n>{command} failed'
 
-    for cached_dir in git_cache.keys():         # dict on git roots
+    for cached_dir in git_cache.keys():          # dict on git roots
         if file.startswith(cached_dir):
-            git_content = git_cache[cached_dir] # dict on abs path file
+            git_content = git_cache[cached_dir]  # dict on abs path file
             if file in git_content.keys():
                 copy_cache_response(data, git_content[file])
                 return True
@@ -342,7 +349,7 @@ def is_in_git(file, data, git_cache):
                     print(f'  {file} was not found')
 
     git_dir = get_git_dir(file)
-    if git_dir == None:
+    if git_dir is None:
         return False
 
     # Make a pushd to the git dir
@@ -369,7 +376,7 @@ def is_in_git(file, data, git_cache):
     if len(reply) == 0:
         os.chdir(curr_dir)
         return False
-    if reply.startswith('fatal'): # fatal: not a git repository ...
+    if reply.startswith('fatal'):  # fatal: not a git repository ...
         os.chdir(curr_dir)         # so it is not a fail
         return False
 
@@ -378,7 +385,7 @@ def is_in_git(file, data, git_cache):
     dir_cache = git_cache[git_dir]
     # Iterate on lines
     for line in reply.splitlines():
-    # 100644 2520fa373ff004b2fd4f9fa3e285b0d7d36c9319 0       script/prepPDB.py
+        # 100644 2520fa373ff004b2fd4f9fa3e285b0d7d36c9319 0   script/prepPDB.py
         repo = re.match(r'^\d+\s*([a-fA-F0-9]+)\s*\d+\s*(.+)$', line)
         if repo:
             revision = repo.group(1)
@@ -397,7 +404,7 @@ def is_in_git(file, data, git_cache):
             cache_entry['reporoot'] = git_remote
             cache_entry['relpath']  = rel_key
             cache_entry['revision'] = revision
-            cache_entry['sha1'] = revision
+            cache_entry['sha1']     = revision
             cache_entry['local']    = git_dir
             cache_entry['remote']   = git_remote
             cache_entry['vcs']      = 'git'
@@ -416,6 +423,7 @@ def is_in_git(file, data, git_cache):
 
     return False
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -433,13 +441,13 @@ def is_in_git_raw(file, data, dummy):
     os.chdir(git_dir)
 
     commando = f'git ls-files -s "{file}"'
-    reply = simur.run_process(commando, False) # False since git may complain
-    if len(reply) == 0:                        # if it is not a repo
+    reply = simur.run_process(commando, False)  # False since git may complain
+    if len(reply) == 0:                         # if it is not a repo
         os.chdir(curr_dir)
         return False
-    if reply.startswith('fatal'): # fatal: not a git repository ...
+    if reply.startswith('fatal'):  # fatal: not a git repository ...
         if debug_level > 4:
-            print(report_fail(curr_dir, commando)) # so it is not a fail
+            print(report_fail(curr_dir, commando))  # so it is not a fail
         os.chdir(curr_dir)
         return False
     reply = reply.rstrip()
@@ -450,7 +458,7 @@ def is_in_git_raw(file, data, dummy):
         data['reporoot'] = str(git_dir)
         data['relpath']  = repo.group(4)
         data['revision'] = repo.group(2)
-        data['sha1'] = repo.group(2)
+        data['sha1']     = repo.group(2)
         data['local']    = str(git_dir)
     else:
         print(report_fail(git_dir, commando))
@@ -473,6 +481,7 @@ def is_in_git_raw(file, data, dummy):
 
     os.chdir(curr_dir)
     return True
+
 
 #-------------------------------------------------------------------------------
 #
@@ -507,6 +516,7 @@ def get_vcs_information(files, vcs_cache, svn_cache, git_cache):
 
     return data
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -518,6 +528,7 @@ def dump_vcsdata(vcs_information):
         for key in what.keys():
             print(f'  {key} : {what[key]}')
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -525,6 +536,7 @@ def plural_files(no):
     if no == 1:
         return 'file'
     return 'files'
+
 
 #-------------------------------------------------------------------------------
 #
@@ -543,6 +555,7 @@ def report_vcsdata(vcs_information):
         print(f'Found {vcses[key]} {plural_files(vcses[key])} using {key}')
 
     return vcses
+
 
 #-------------------------------------------------------------------------------
 # --- Routines for inserting the data into the pdb ---
@@ -571,11 +584,12 @@ def init_the_stream_text(vcs_information):
     # fnbksl - replace forward slashes with backward ditos
     # fnfile - extract filename (basename)
     # targ   - is the temp dir where the debugger roots its contents
-    stream.append('VCGET_TARGET=' +
-        '%targ%\\%fnbksl%(%var4%)\\%var6%\\%fnfile%(%var1%)')
+    stream.append('VCGET_TARGET='
+                  '%targ%\\%fnbksl%(%var4%)\\%var6%\\%fnfile%(%var1%)')
     # How to build the command to extract file from source control
-    stream.append('VCGET_COMMAND=' +
-        'cmd /c vcget.cmd %var2% "%var3%" "%var4%" %var5% > "%vcget_target%"')
+    stream.append('VCGET_COMMAND='
+                  'cmd /c vcget.cmd %var2% "%var3%" "%var4%" %var5%'
+                  ' > "%vcget_target%"')
 
     # our data
     #  VAR2 VAR3       VAR4      VAR5     VAR6
@@ -596,12 +610,14 @@ def init_the_stream_text(vcs_information):
     stream.append('SRCSRV: end -----------------------------------------------')
     return stream
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
 def dump_stream_data(stream):
     for line in stream:
         print(line)
+
 
 #-------------------------------------------------------------------------------
 #
@@ -614,6 +630,7 @@ def make_backup_file(src_file, extension):
     shutil.copyfile(src_file, dst_file)
     return dst_file
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -621,6 +638,7 @@ def make_cache_file(pdb_file):
     common_root, ext = os.path.splitext(pdb_file)
     cache_file = common_root + '.simur.json'
     return cache_file
+
 
 #-------------------------------------------------------------------------------
 #
@@ -633,9 +651,10 @@ def make_stream_file(pdb_file, stream):
 
     with open(tempfile, 'w+t') as f:
         for line in stream:
-            f.write(line+'\n')
+            f.write(line + '\n')
 
     return tempfile
+
 
 #-------------------------------------------------------------------------------
 #
@@ -661,12 +680,14 @@ def dump_stream_to_pdb(pdb_file, srcsrv, stream):
 
     os.remove(tempfile)                 # Or keep it for debugging
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
 def write_cache_file(pdb_file, vcs_data):
     cache_file = make_cache_file(pdb_file)
     simur.store_json_data(cache_file, vcs_data)
+
 
 #-------------------------------------------------------------------------------
 #
@@ -685,6 +706,7 @@ def update_presoak_file(vcs_data):
 
     simur.store_json_data(presoak_file, data)
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -693,6 +715,7 @@ def check_winkits(srcsrv):
         print(f'Sorry, the WinKits directory {srcsrv} does not exist')
         return 3
     return 0
+
 
 #-------------------------------------------------------------------------------
 #
@@ -707,6 +730,7 @@ def check_paths(root):
 
     return 0
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -719,6 +743,7 @@ def check_indexed(root, srcsrv):
         return 1
 
     return 0
+
 
 #-------------------------------------------------------------------------------
 #
@@ -735,6 +760,7 @@ def check_indexed_lib(pdb):
 
     return ""
 
+
 #-------------------------------------------------------------------------------
 # Insert VCS data from static library
 #-------------------------------------------------------------------------------
@@ -747,6 +773,7 @@ def merge_vcs_data(vcs_cache, lib_data_file):
     vcs_cache.update(lib_data)
 #    print(f'Outcome:')
 #    dump_vcsdata(vcs_cache)
+
 
 #-------------------------------------------------------------------------------
 #
@@ -763,6 +790,7 @@ def check_requirements(root, srcsrv):
 
     return 0
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -771,6 +799,7 @@ def make_time_stamp(text, debug):
         return
     instant = datetime.today().strftime("%H:%M:%S:%f")
     print(f'{instant}: {text}')
+
 
 #-------------------------------------------------------------------------------
 # Handle PDB:s for executables (*.exe, *.dll)
@@ -825,6 +854,7 @@ def prep_exe_pdb(root, srcsrv, vcs_cache, svn_cache, git_cache, debug=0):
 
     return 0
 
+
 #-------------------------------------------------------------------------------
 # Handle PDB:s for static libraries (*.lib)
 #-------------------------------------------------------------------------------
@@ -865,6 +895,7 @@ def prep_lib_pdb(root, srcsrv, cvdump, vcs_cache, svn_cache, git_cache, debug=0)
 
     return 0
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -874,6 +905,7 @@ def extract_repo_roots(the_cache):
         roots.append(the_dir)
 
     return roots
+
 
 #-------------------------------------------------------------------------------
 #
@@ -910,6 +942,7 @@ def verify_cache_data(vcs_cache):
 
     return new_data
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -933,6 +966,7 @@ def main():
 #    dummy_file = 'dummy.json'
 #    simur.store_json_data(dummy_file, dummy_cache)
     return outcome
+
 
 #-------------------------------------------------------------------------------
 #

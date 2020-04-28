@@ -1,6 +1,6 @@
 import os
-from pathlib import Path
-import re
+# from pathlib import Path
+# import re
 import shutil
 import sys
 
@@ -12,9 +12,12 @@ import prepPDB
 #
 #-------------------------------------------------------------------------------
 def about_cvdump():
-    print('  You need to have cvdump.exe in your path to index static libraries')
+    print('  You need to have cvdump.exe in your path to index'
+          ' static libraries')
     print('  - you can find it here:')
-    print('  https://github.com/microsoft/microsoft-pdb/blob/master/cvdump/cvdump.exe')
+    print('  https://github.com/microsoft/microsoft-pdb/blob/master'
+          '/cvdump/cvdump.exe')
+
 
 #-------------------------------------------------------------------------------
 #
@@ -27,6 +30,7 @@ def usage():
     print(f'  this is an attempt at mimicking srctool for PDBs from static')
     print(f'  libraries, since there is none from Microsoft\n')
     about_cvdump()
+
 
 #-------------------------------------------------------------------------------
 # --- Routines for extracting the data from the pdb and associated vcs:s ---
@@ -54,6 +58,7 @@ def check_paths(root):
 
     return 0
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -75,6 +80,7 @@ def process_raw_cvdump_data(raw_data):
 
     return files
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -90,19 +96,22 @@ def get_lib_source_files(pdb_file, cvdump, srcsrv):
     files = process_raw_cvdump_data(raw_data)
     return files
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
 def check_cvdump(cvdump):
     second_try = cvdump
     cvdump = shutil.which(cvdump)
-    if cvdump == None:
+    if cvdump is None:
         # Not in path, try once more in 'this' directory
-        cvdump = shutil.which(second_try, path = os.path.dirname(os.path.abspath(__file__)))
-    if cvdump == None:
+        cvdump = shutil.which(second_try,
+                              path=os.path.dirname(os.path.abspath(__file__)))
+    if cvdump is None:
         about_cvdump()
 
     return cvdump
+
 
 #-------------------------------------------------------------------------------
 #
@@ -115,6 +124,7 @@ def check_requirements(root, cvdump):
         return_value = 3
 
     return return_value
+
 
 #-------------------------------------------------------------------------------
 #
@@ -147,6 +157,7 @@ def main():
         print(file)
 
     return 0
+
 
 #-------------------------------------------------------------------------------
 #

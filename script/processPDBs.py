@@ -8,6 +8,7 @@ import time
 import libSrcTool
 import prepPDB
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -16,6 +17,7 @@ def usage():
     print(f'usage: {the_script} pdb-dir srcsrv-dir')
     print(f'  e.g. {the_script} RelWithDebInfo C:/WinKits/10/Debuggers/x64/srcsrv')
     print(f'    process all the PDB:s in the pdb-dir and sub directories')
+
 
 #-------------------------------------------------------------------------------
 #
@@ -29,6 +31,7 @@ def list_all_files(directory, ext):
                 the_chosen_files.append(os.path.join(root, file))
 
     return the_chosen_files
+
 
 #-------------------------------------------------------------------------------
 #
@@ -56,6 +59,7 @@ def filter_pdbs(pdbs, cvdump, srcsrv):
 
     return lib_pdbs, exe_pdbs
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -64,15 +68,17 @@ def get_available_bins(bins_in):
     bins_not  = []
     for the_bin in bins_in:
         reply = shutil.which(the_bin)
-        if reply == None:
+        if reply is None:
             # Not in path, try once more in 'this' directory
-            reply = shutil.which(the_bin, path = os.path.dirname(os.path.abspath(__file__)))
+            this_dir = os.path.dirname(os.path.abspath(__file__))
+            reply = shutil.which(the_bin, path=this_dir)
 
-        if reply == None:
+        if reply is None:
             bins_not.append(the_bin)
         else:
             bins_found.append(reply)
     return bins_found, bins_not
+
 
 #-------------------------------------------------------------------------------
 #
@@ -118,6 +124,7 @@ def make_log(srcsrv, elapsed):
         for the_exe in unfound_bins:
             print(f'  {the_exe}:')
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -160,26 +167,26 @@ def main():
     for lib_pdb in lib_pdbs:
         print(f'---\nProcessing library {lib_pdb}')
         outcome += prepPDB.prep_lib_pdb(lib_pdb,
-            srcsrv,
-            cvdump,
-            vcs_cache,
-            svn_cache,
-            git_cache,
-            debug_level)
+                                        srcsrv,
+                                        cvdump,
+                                        vcs_cache,
+                                        svn_cache,
+                                        git_cache,
+                                        debug_level)
 
     for exe_pdb in exe_pdbs:
         print(f'---\nProcessing executable {exe_pdb}')
         outcome += prepPDB.prep_exe_pdb(exe_pdb,
-            srcsrv,
-            vcs_cache,
-            svn_cache,
-            git_cache,
-            debug_level)
+                                        srcsrv,
+                                        vcs_cache,
+                                        svn_cache,
+                                        git_cache,
+                                        debug_level)
 
     if debug_level > 4:
         simur.store_json_data(cache_file, vcs_cache)
     end = time.time()
-    make_log(srcsrv, end-start)
+    make_log(srcsrv, end - start)
     # Store the directories where we found our 'roots'
     # This can be used for checking if we have un-committed changes
     roots = {}
@@ -195,6 +202,7 @@ def main():
         simur.store_json_data(git_file, git_cache)
 
     return outcome
+
 
 #-------------------------------------------------------------------------------
 #

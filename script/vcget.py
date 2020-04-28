@@ -1,6 +1,4 @@
-import hashlib
 import os
-import shutil
 import simur
 import sys
 
@@ -12,6 +10,7 @@ def usage():
     print(f'{sys.argv[0]} vcs reporoot relpath revision')
     print(f'  e.g. {sys.argv[0]} svn https://barbar/svn/SVNrepo trunk/main.c 3')
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -21,6 +20,7 @@ def handle_svn(reporoot, relpath, revision):
     reply = simur.run_process(command, True, None)
 
     return reply
+
 
 #-------------------------------------------------------------------------------
 #
@@ -34,6 +34,7 @@ def handle_local_git(reporoot, revision):
     os.chdir(curr_dir)
 
     return reply
+
 
 #-------------------------------------------------------------------------------
 #
@@ -53,6 +54,7 @@ def handle_remote_git(reporoot, revision):
 
     return reply
 
+
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -63,6 +65,7 @@ def handle_git(reporoot, revision):
         reply = handle_remote_git(reporoot, revision)
 
     return reply
+
 
 #-------------------------------------------------------------------------------
 #
@@ -90,6 +93,7 @@ def main():
     print(reply, end='')
 
     return 0
+
 
 #-------------------------------------------------------------------------------
 #
