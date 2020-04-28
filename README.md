@@ -17,16 +17,18 @@ python and correct path to script\vcget.py
 - Test for git by calling
 > vcget.cmd git https://github.com/NilssonOpel/gitcat_test2.git success2.c 0e16bc26f432
 
-You should get the content of sucess2.c, and you will have a clone of the
+You should get the content of success2.c, and you will have a clone of the
 git repo in the folder given by SIMUR_REPO_CACHE (or C:\simur_repo if you did
 not set it)
 
 - Test for Subversion:
 > vcget.cmd svn https://svn.riouxsvn.com/svncat_test1/trunk main.c 6
 
-For Subversion SIMuR do not populate the SIMUR_REPO_CACHE, it will use 'svn cat'
+For Subversion, SIMuR do not populate the SIMUR_REPO_CACHE, it will use
+'svn cat' directly from the subversion server, i.e. vcget will eventually call
+> svn cat https://svn.riouxsvn.com/svncat_test1/trunk/main.c@6
 
-- Test on you own sources
+- Test on your own sources
 > processPDBs.py 'dir-with-pdbs' 'srcsrv-dir'
 
 **Now the .pdb files should contain instructions how to fetch the correct source
@@ -34,7 +36,7 @@ files, which you can see by running**
 
 > "C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\srcsrv\pdbstr.exe" -r -p:TestGitCat.pdb -s:srcsrv
 
-and it should look something like
+and in the PDB you should find that looks something like this
 
     VERSION=1
     VERCTL=SvnGit
@@ -60,6 +62,12 @@ If you have these installed
 - Git
 - Debugging Tools for Windows,
 https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/index
+
+You need to set up Visual Studio to enable source server support, you can
+read about here
+http://www.symbolsource.org/Public/Home/VisualStudio
+and
+https://docs.microsoft.com/en-us/visualstudio/debugger/general-debugging-options-dialog-box?view=vs-2019
 
 *There is an issue with Win10 that JIT debugging is by default disabled.  Since
 the test program have a crash, this has to be enabled.  The crash is to get into
