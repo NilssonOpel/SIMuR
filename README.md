@@ -1,6 +1,8 @@
 # SIMuR
 ## Source Indexing for MUltiple Repositories
 Currently supporting mixed repos of git and svn
+Works with any gitserver: GitHub, GitLab, your private git server or whatever
+
 
 ## For the impatient
 - Set the environment variable ***SIMUR_REPO_CACHE*** to some directory, e.g.
@@ -14,8 +16,12 @@ python and correct path to script\vcget.py
 
 **vcget.cmd is what your debugger will call to get the sources**
 
-- Test for git by calling
+- Test for GitLab by calling
+> vcget.cmd git https://gitlab.com/luckshot/ansible-workstation.git README.md d18a86301959
+
+- Test for GitHub by calling
 > vcget.cmd git https://github.com/NilssonOpel/gitcat_test2.git success2.c 0e16bc26f432
+
 
 You should get the content of success2.c, and you will have a clone of the
 git repo in the folder given by SIMUR_REPO_CACHE (or C:\simur_repo if you did
