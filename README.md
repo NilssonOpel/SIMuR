@@ -43,7 +43,7 @@ files, which you can see by running**
 
 > "C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\srcsrv\pdbstr.exe" -r -p:TestGitCat.pdb -s:srcsrv
 
-and in the PDB you should find that looks something like this
+and in the PDB you should find a passage that looks something like this
 
     VERSION=1
     VERCTL=SvnGit
@@ -77,7 +77,7 @@ and
 https://docs.microsoft.com/en-us/visualstudio/debugger/general-debugging-options-dialog-box?view=vs-2019
 
 *There is an issue with Win10 that JIT debugging is by default disabled.  Since
-the test program have a crash, this has to be enabled.  The crash is to get into
+the test program have a crash, JIT debugging has to be enabled.  The crash is to get into
 the debugger and to show that the debugger can pick up the remote sources*.
 
 To enable JIT debugging please take a look at
