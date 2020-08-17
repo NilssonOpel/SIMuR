@@ -233,7 +233,7 @@ def getFileProperties(fname):
             strInfo[propName] = win32api.GetFileVersionInfo(fname, strInfoPath)
 
         props['StringFileInfo'] = strInfo
-    except:
+    except Exception:
         pass
 
     return props

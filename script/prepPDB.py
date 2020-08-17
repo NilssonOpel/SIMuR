@@ -183,7 +183,7 @@ def is_in_svn(file, data, svn_cache):
             try:
                 key = os.path.join(svn_dir, path)
                 key = Path(key).resolve()
-            except:
+            except Exception:
                 if debug_level > 4:
                     print(f'cannot handle the path')
                 # Incapacitate in case we encounter them in the future
@@ -200,7 +200,7 @@ def is_in_svn(file, data, svn_cache):
                 cache_entry['reporoot'] = url
                 cache_entry['relpath']  = url_rel
                 cache_entry['revision'] = rev
-                cache_entry['sha1']  = sha
+                cache_entry['sha1'] = sha
                 cache_entry['vcs'] = 'svn'
                 dir_cache[key] = cache_entry
                 if debug_level > 4:
@@ -394,7 +394,7 @@ def is_in_git(file, data, git_cache):
             key = os.path.join(git_dir, rel_key)
             try:
                 key = Path(key).resolve()
-            except:
+            except Exception:
                 if debug_level > 4:
                     print(f'cannot handle {line}')
                 continue
