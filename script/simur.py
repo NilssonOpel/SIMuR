@@ -32,6 +32,7 @@ def ccp():
 #-------------------------------------------------------------------------------
 def run_process(command, do_check, extra_dir=os.getcwd()):
     try:
+        my_command = command
         status = subprocess.run(command,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
@@ -45,11 +46,13 @@ def run_process(command, do_check, extra_dir=os.getcwd()):
             reply += status.stderr
 
     except Exception as e:
+        reply = '\n-start of exception-\n'
+        reply += f'The command\n>{command}\nthrew an exception'
         if extra_dir:
-            command = f'At {extra_dir}:\n'
-        reply = f'{command} threw an exception:\n'
-        reply += f'type: {type(e)}\n'
-        reply += f'    : {e}\n'
+            reply += f' (standing in directory {extra_dir})'
+        reply += f':\n\n'
+        reply += f'type:  {type(e)}\n'
+        reply += f'text:  {e}\n'
         reply += '\n-end of exception-\n'
         reply += f'stdout: {e.stdout}\n'
         reply += f'stderr: {e.stderr}\n'
