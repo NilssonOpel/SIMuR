@@ -23,6 +23,8 @@ python and correct path to script\vcget.py
 - Test for GitHub by calling
 > vcget.cmd git https://github.com/NilssonOpel/gitcat_test2.git success2.c 0e16bc26f432
 
+- Test for BitBucket by calling
+> vcget.cmd git https://bitbucket.org/bitbucket/cloudide.git codio.json ac9aa7f4dc
 
 You should get the content of success2.c, and you will have a clone of the
 git repo in the folder given by SIMUR_REPO_CACHE (or C:\simur_repo if you did
