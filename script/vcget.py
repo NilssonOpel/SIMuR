@@ -71,7 +71,7 @@ def handle_git(reporoot, revision):
 #
 #-------------------------------------------------------------------------------
 def main():
-    if len(sys.argv) < 4:
+    if len(sys.argv) < 5:
         print("Too few arguments")
         usage()
         return 3
@@ -86,7 +86,7 @@ def main():
     elif vcs == 'git':
         reply = handle_git(reporoot, revision)
     else:
-        print(f'(Cannot handle {vcs}')
+        print(f'Cannot handle {vcs}, only svn and git\n')
         usage()
         return 3
 
