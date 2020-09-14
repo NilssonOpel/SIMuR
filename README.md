@@ -73,14 +73,15 @@ If you have these installed
 https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/index
 
 You need to set up Visual Studio to enable source server support, you can
-read about here
+read about how here
 http://www.symbolsource.org/Public/Home/VisualStudio
 and
 https://docs.microsoft.com/en-us/visualstudio/debugger/general-debugging-options-dialog-box?view=vs-2019
 
 *There is an issue with Win10 that JIT debugging is by default disabled.  Since
-the test program have a crash, JIT debugging has to be enabled.  The crash is to get into
-the debugger and to show that the debugger can pick up the remote sources*.
+the test program has a crash, JIT debugging has to be enabled for the test to
+work.  The crash is to get into the debugger and to show that the debugger can
+pick up the remote sources*.
 
 To enable JIT debugging please take a look at
 https://docs.microsoft.com/en-us/visualstudio/debugger/debug-using-the-just-in-time-debugger?view=vs-2019
