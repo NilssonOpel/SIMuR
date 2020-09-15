@@ -26,9 +26,9 @@ python and correct path to script\vcget.py
 - Test for BitBucket by calling
 > vcget.cmd git https://bitbucket.org/bitbucket/cloudide.git codio.json ac9aa7f4dc
 
-You should get the content of success2.c, and you will have a clone of the
-git repo in the folder given by SIMUR_REPO_CACHE (or C:\simur_repo if you did
-not set it)
+You should see the content of the file in question (README.md, success2.c or
+codio.json), and you will get a clone of the git repo in the folder given by
+SIMUR_REPO_CACHE (or C:\simur_repo if you did not set it)
 
 - Test for Subversion:
 > vcget.cmd svn https://svn.riouxsvn.com/svncat_test1/trunk main.c 6
