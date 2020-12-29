@@ -81,11 +81,11 @@ def get_non_indexed(root, srcsrv, vcs_cache):
     all_files = filestring.splitlines()
     files = []
     for file in all_files:
-        canonical_path = os.path.realpath(file)
-        if os.path.isfile(canonical_path):
-            files.append(canonical_path)
+        absolute_path = os.path.abspath(file)
+        if os.path.isfile(absolute_path):
+            files.append(absolute_path)
         if file in vcs_cache.keys():
-            files.append(canonical_path)
+            files.append(absolute_path)
 
     return files
 
@@ -182,7 +182,7 @@ def is_in_svn(file, data, svn_cache):
                 node_kind = 'went_wrong'
             try:
                 key = os.path.join(svn_dir, path)
-                key = Path(key).resolve()
+                key = os.path.abspath(key)
             except Exception:
                 if debug_level > 4:
                     print(f'cannot handle the path')
@@ -297,8 +297,7 @@ def get_root_dir(path, ext):
     # Add a cache for those directories that are not git-ish
     # and also for those that are
     dir = os.path.dirname(path)
-
-    curr_dir = os.path.realpath(dir)
+    curr_dir = os.path.abspath(dir)
     while True:
         if debug_level > 4:
             print(f'Looking at {curr_dir}')
@@ -310,7 +309,7 @@ def get_root_dir(path, ext):
             return None
         curr_dir = next_dir
 
-    curr_dir = Path(curr_dir).resolve()
+    curr_dir = os.path.abspath(curr_dir)
     return curr_dir
 
 
@@ -361,14 +360,17 @@ def is_in_git(file, data, git_cache):
 
     #Look for remote:s
     commando = 'git remote -v'
-    git_remote = 'none'
+    git_remote = None
     reply = simur.run_process(commando, True)
     lines = reply.splitlines()
     for line in lines:
         remote = re.match(r'^origin\s*(.+)\s+\(fetch\)$', line)
         if remote:
             git_remote = remote.group(1)
-        # No else - you cannot know it there is a remote
+        # No else - you cannot know if there is a remote
+
+    if git_remote is None:
+        print(f'Warning: {git_dir} has no remote')
 
     # Get the contents of the repository
     commando = 'git ls-files -s'
@@ -393,7 +395,7 @@ def is_in_git(file, data, git_cache):
             # Make the key
             key = os.path.join(git_dir, rel_key)
             try:
-                key = Path(key).resolve()
+                key = os.path.abspath(key)
             except Exception:
                 if debug_level > 4:
                     print(f'cannot handle {line}')
@@ -494,7 +496,7 @@ def get_vcs_information(files, vcs_cache, svn_cache, git_cache):
         if skip_file(file):
             continue
         # Restore correct case-ing to satisfy git (and me)
-        file = Path(file).resolve()
+        file = os.path.abspath(file)
         file = str(file)
         if file in vcs_cache.keys():
             cached = vcs_cache[file]
