@@ -8,6 +8,8 @@ rd /s /q %LIB_ROOT%
 rd /s /q hidden_%ROOT%
 rd /s /q hidden_%LIB_ROOT%
 
+rd /s /q %JUNKTION%
+junction -d %JUNKTION%
 :: and maybe also
 rd /s /q %LOCALAPPDATA%\Sourceserver
 :: Will remove VS's own internal SRCSRV cache
