@@ -1,3 +1,4 @@
+import datetime
 import os
 import re
 import shutil
@@ -83,6 +84,17 @@ def get_available_bins(bins_in):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
+def make_time_string(elapsed):
+    if elapsed > 60:
+        longer_time = datetime.timedelta(seconds=elapsed)
+        return str(longer_time)
+
+    return str(elapsed) + ' secs'
+
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
 def make_log(srcsrv, elapsed):
     bins_used = [
         sys.executable,
@@ -101,7 +113,7 @@ def make_log(srcsrv, elapsed):
     print(f'Executed by       : {os.getenv("USERNAME")}')
     print(f'  on machine      : {os.getenv("COMPUTERNAME")}')
     print(f'  SIMUR_REPO_CACHE: {os.getenv("SIMUR_REPO_CACHE")}')
-    print(f'  elapsed time    : {elapsed}')
+    print(f'  elapsed time    : {make_time_string(elapsed)}')
 
     codepage = simur.run_process('cmd /c CHCP', False)
     cp = re.match(r'^.*:\s+(\d*)$', codepage)
@@ -130,7 +142,7 @@ def make_log(srcsrv, elapsed):
 #-------------------------------------------------------------------------------
 def main():
     start = time.time()
-    debug_level = 0
+    debug_level = 4
     if len(sys.argv) < 2:
         print("Too few arguments")
         usage()
