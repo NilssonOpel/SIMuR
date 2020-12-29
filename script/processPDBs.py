@@ -142,7 +142,7 @@ def make_log(srcsrv, elapsed):
 #-------------------------------------------------------------------------------
 def main():
     start = time.time()
-    debug_level = 4
+    debug_level = 0
     if len(sys.argv) < 2:
         print("Too few arguments")
         usage()
