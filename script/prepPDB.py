@@ -663,7 +663,7 @@ def make_stream_file(pdb_file, stream):
 #
 #-------------------------------------------------------------------------------
 def dump_stream_to_pdb(pdb_file, srcsrv, stream):
-    debug_level = 6
+    debug_level = 0
     tempfile = make_stream_file(pdb_file, stream)
 # To restore the pdb:s
 #---
