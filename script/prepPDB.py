@@ -13,8 +13,9 @@ import simur
 #
 #-------------------------------------------------------------------------------
 def usage():
-    print(f'{sys.argv[0]} pdb-file srcsrv-dir')
-    print(f'  e.g. {sys.argv[0]} RelWithDebInfo/TestGitCat.pdb C:/WinKits/10/Debuggers/x64/srcsrv')
+    print(f'{sys.argv[0]} pdb-file dir-of-pdbs srcsrv-dir')
+    print(f'  e.g. {sys.argv[0]} TestGitCat.pdb RelWithDebInfo C:/WinKits/10/Debuggers/x64/srcsrv')
+    print(f'       {sys.argv[0]} armLibSupport.pdb . //ExternalAccess/WinKit10Debuggers/srcsrv')
 
 
 #-------------------------------------------------------------------------------
@@ -662,7 +663,7 @@ def make_stream_file(pdb_file, stream):
 #
 #-------------------------------------------------------------------------------
 def dump_stream_to_pdb(pdb_file, srcsrv, stream):
-    debug_level = 0
+    debug_level = 6
     tempfile = make_stream_file(pdb_file, stream)
 # To restore the pdb:s
 #---
@@ -680,7 +681,7 @@ def dump_stream_to_pdb(pdb_file, srcsrv, stream):
     commando = f'{pdbstr} -w -s:srcsrv -p:{pdb_file} -i:{tempfile}'
     simur.run_process(commando, True)
 
-    os.remove(tempfile)                 # Or keep it for debugging
+#    os.remove(tempfile)                 # Or keep it for debugging
 
 
 #-------------------------------------------------------------------------------
@@ -948,23 +949,99 @@ def verify_cache_data(vcs_cache):
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
+def do_the_job(the_pdb, root, srcsrv, cvdump, dummy_cache, svn_cache, git_cache,
+    debug_level):
+    import processPDBs as processPDBs
+
+    pdbs = processPDBs.list_all_files(root, ".pdb")
+    if len(pdbs) == 0:
+        print(f'No PDB:s found in directory {root}')
+        return 3
+
+    # If there is no cvdump, then we won't filter out an lib_pdbs either
+    lib_pdbs, exe_pdbs = processPDBs.filter_pdbs(pdbs, cvdump, srcsrv)
+
+    outcome = 0
+    cache_file = os.path.join(root, 'vcs_cache.json')
+    # vcs_cache = simur.load_json_data(cache_file)
+    # Should verify or update the cache before using it! - But it takes time
+    # vcs_cache = prepPDB.verify_cache_data(vcs_cache)
+    vcs_cache = {}
+    svn_cache = {}
+    git_cache = {}
+
+    for lib_pdb in lib_pdbs:
+        print(f'---\nProcessing library {lib_pdb}')
+        outcome += prep_lib_pdb(lib_pdb,
+                                        srcsrv,
+                                        cvdump,
+                                        vcs_cache,
+                                        svn_cache,
+                                        git_cache,
+                                        debug_level)
+
+    for exe_pdb in exe_pdbs:
+        if not the_pdb in exe_pdb:
+            print(f'---\nSkipping {exe_pdb}')
+            continue
+        print(f'---\nProcessing executable {exe_pdb}')
+        outcome += prep_exe_pdb(exe_pdb,
+                                        srcsrv,
+                                        vcs_cache,
+                                        svn_cache,
+                                        git_cache,
+                                        debug_level)
+
+    if debug_level > 4:
+        simur.store_json_data(cache_file, vcs_cache)
+    # Store the directories where we found our 'roots'
+    # This can be used for checking if we have un-committed changes
+    roots = {}
+    roots["svn"] = extract_repo_roots(svn_cache)
+    roots["git"] = extract_repo_roots(git_cache)
+    repo_file = os.path.join(root, 'repo_roots.json')
+    simur.store_json_data(repo_file, roots)
+
+    if debug_level > 4:
+        svn_file = os.path.join(root, 'svn_cache.json')
+        simur.store_json_data(svn_file, svn_cache)
+        git_file = os.path.join(root, 'git_cache.json')
+        simur.store_json_data(git_file, git_cache)
+
+    return outcome
+
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
 def main():
+    '''Just as processPDBs only that as the first argument give the PDB of
+    interest
+    Example:
+    prepPDB.py armLibSupport.pdb . //ExternalAccess/WinKit10Debuggers/srcsrv
+    '''
+    debug_level = 6
     if len(sys.argv) < 2:
         print("Too few arguments")
         usage()
         exit(3)
-    debug = 0
-    root = sys.argv[1]
-    srcsrv = sys.argv[2]
+    the_pdb = sys.argv[1]
+    root = sys.argv[2]
+    cvdump = 'cvdump.exe'
+    srcsrv = 'C:\\Program Files (x86)\\Windows Kits\\10\\Debuggers\\x64\\srcsrv'
+    if len(sys.argv) > 3:
+        srcsrv = sys.argv[3]
+    if check_winkits(srcsrv):
+        return 3
 
-    failing_requirements = check_requirements(root, srcsrv)
-    if failing_requirements:
-        return failing_requirements
+    if len(sys.argv) > 4:
+        cvdump = sys.argv[4]
+    cvdump = libSrcTool.check_cvdump(cvdump)
 
     dummy_cache = {}
     svn_cache = {}
     git_cache = {}
-    outcome = do_the_job(root, srcsrv, dummy_cache, svn_cache, git_cache, debug)
+    outcome = do_the_job(the_pdb, root, srcsrv, cvdump, dummy_cache, svn_cache,
+        git_cache, debug_level)
 #    dummy_file = 'dummy.json'
 #    simur.store_json_data(dummy_file, dummy_cache)
     return outcome
