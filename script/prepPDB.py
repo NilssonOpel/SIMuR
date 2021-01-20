@@ -681,7 +681,7 @@ def dump_stream_to_pdb(pdb_file, srcsrv, stream):
     commando = f'{pdbstr} -w -s:srcsrv -p:{pdb_file} -i:{tempfile}'
     simur.run_process(commando, True)
 
-#    os.remove(tempfile)                 # Or keep it for debugging
+    os.remove(tempfile)                 # Or keep it for debugging
 
 
 #-------------------------------------------------------------------------------
