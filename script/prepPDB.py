@@ -691,6 +691,9 @@ def write_cache_file(pdb_file, vcs_data):
     cache_file = make_cache_file(pdb_file)
     simur.store_json_data(cache_file, vcs_data)
 
+    pdb_access_time  = os.path.getatime(pdb_file)
+    pdb_mod_time  = os.path.getmtime(pdb_file)
+    os.utime(cache_file, times=(pdb_access_time, pdb_mod_time))
 
 #-------------------------------------------------------------------------------
 #
