@@ -30,14 +30,18 @@ def ccp():
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
-def run_process(command, do_check, extra_dir=os.getcwd()):
+def run_process(command, do_check, extra_dir=os.getcwd(), as_text=True):
     try:
         my_command = command
+        encoding_used = None
+        if as_text:
+            encoding_used = ccp()
+
         status = subprocess.run(command,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
-                                text=True,
-                                encoding=ccp(),  # See https://bugs.python.org/issue27179
+                                text=as_text,
+                                encoding=encoding_used,  # See https://bugs.python.org/issue27179
                                 check=do_check)
         if status.returncode == 0:
             reply = status.stdout
