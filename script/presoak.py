@@ -29,6 +29,11 @@ def main():
         print(f'No presoak information found in {presoak_file}')
         return 0
 
+    # Remove the error report file to get current status
+    reportfile = simur.get_presoak_report_file()
+    if os.path.exists(reportfile):
+        os.remove(reportfile)
+
     print(f'Processing {presoak_file}')
     for directory in presoak.keys():
         print(f'Looking at {directory}')

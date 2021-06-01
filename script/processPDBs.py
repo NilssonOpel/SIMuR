@@ -52,7 +52,7 @@ def filter_pdbs(pdbs, cvdump, srcsrv):
             exe_pdbs.append(pdb_file)
         elif cvdump:
             commando = f'{cvdump} {pdb_file}'
-            raw_data = simur.run_process(commando, True)
+            raw_data, exit_code = simur.run_process(commando, True)
 
             files = libSrcTool.process_raw_cvdump_data(raw_data)
             if len(files):
@@ -115,7 +115,7 @@ def make_log(srcsrv, elapsed):
     print(f'  SIMUR_REPO_CACHE: {os.getenv("SIMUR_REPO_CACHE")}')
     print(f'  elapsed time    : {make_time_string(elapsed)}')
 
-    codepage = simur.run_process('cmd /c CHCP', False)
+    codepage, exit_code = simur.run_process('cmd /c CHCP', False)
     cp = re.match(r'^.*:\s+(\d*)$', codepage)
     if cp:
         codepage = cp.group(1)

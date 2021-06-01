@@ -26,11 +26,11 @@ def ccp():
             ccp.codepage = 'utf-8'
         return ccp.codepage
 
-
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
 def run_process(command, do_check, extra_dir=os.getcwd(), as_text=True):
+    exit_code = 0
     try:
         my_command = command
         encoding_used = None
@@ -48,6 +48,7 @@ def run_process(command, do_check, extra_dir=os.getcwd(), as_text=True):
         else:
             reply = status.stdout
             reply += status.stderr
+        exit_code = status.returncode
 
     except Exception as e:
         reply = '\n-start of exception-\n'
@@ -60,9 +61,11 @@ def run_process(command, do_check, extra_dir=os.getcwd(), as_text=True):
         reply += '\n-end of exception-\n'
         reply += f'stdout: {e.stdout}\n'
         reply += f'stderr: {e.stderr}\n'
+        if as_text == False:
+            reply = reply.encode('utf-8')
+        exit_code = 3
 
-    return reply
-
+    return reply, exit_code
 
 #-------------------------------------------------------------------------------
 #
@@ -72,7 +75,6 @@ def my_mkdir(the_dir):
         os.mkdir(the_dir)
     the_dir = os.path.realpath(the_dir)
     return the_dir
-
 
 #-------------------------------------------------------------------------------
 #
@@ -90,7 +92,6 @@ def get_repo_cache_dir():
 
     return repo_cache
 
-
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -100,7 +101,6 @@ def get_repo_cache_file(name):
 
     return cache_file
 
-
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -109,6 +109,13 @@ def get_presoak_file():
 
     return presoak_file
 
+#-------------------------------------------------------------------------------
+#
+#-------------------------------------------------------------------------------
+def get_presoak_report_file():
+    presoak_file = get_repo_cache_file('presoak_report.json')
+
+    return presoak_file
 
 #-------------------------------------------------------------------------------
 #
@@ -126,14 +133,12 @@ def load_json_data(file):
 
     return data
 
-
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
 def store_json_data(file, data):
     with open(file, 'w') as fp:
         json.dump(data, fp, indent=2)
-
 
 #-------------------------------------------------------------------------------
 #
@@ -142,9 +147,9 @@ def get_the_git_dir(start_dir, find_dir):
     # find subdirectory 'find_dir' within 'start_dir'
     for root, dirs, files in os.walk(start_dir):
         if find_dir in dirs:
-            return os.path.join(root, find_dir)
+            answer = os.path.abspath(os.path.join(root, find_dir, ".."))
+            return answer
     return
-
 
 #-------------------------------------------------------------------------------
 #
@@ -152,6 +157,8 @@ def get_the_git_dir(start_dir, find_dir):
 def find_and_update_git_cache(reporoot):
     # Take in the cache directory through an environment variable since vcget
     # may be called from all kind of debugging tools
+    exit_code = 0
+    reply = ""
     global_repo = get_repo_cache_dir()
 
     reporoot_as_bytes = reporoot.encode()  # default utf-8
@@ -167,11 +174,15 @@ def find_and_update_git_cache(reporoot):
     if git_dir:
         os.chdir(git_dir)
         command = 'git pull'
-        run_process(command, True, git_dir)
+        reply, exit_code = run_process(command, True, git_dir)
+        if exit_code:
+            print("  pulling failed: ", reply)
     else:
         command = f'git clone {reporoot}'
-        run_process(command, True, global_repo)
+        reply, exit_code = run_process(command, True, global_repo)
         git_dir = get_the_git_dir(global_repo, '.git')
+        if exit_code:
+            print("  cloning failed: ", reply)
 
     # Update the dictionary of reporoot and the sha1 so we can have a 'presoak'
     # that updates all the current repos off-line.  It can be tedious if vcget
@@ -190,10 +201,16 @@ def find_and_update_git_cache(reporoot):
         presoak[reporoot] = global_repo
         store_json_data(presoak_file, presoak)
 
+    # Store errors in a file that can be monitored
+    if exit_code:
+        report_file = get_presoak_report_file()
+        report = load_json_data(report_file)
+        report[reporoot] = reply.splitlines()
+        store_json_data(report_file, report)
+
     os.chdir(curr_dir)
 
     return git_dir
-
 
 #-------------------------------------------------------------------------------
 # Shamelessly stolen from:

@@ -17,7 +17,8 @@ def usage():
 def handle_svn(reporoot, relpath, revision):
     url = reporoot + '/' + relpath
     command = f'svn cat {url}@{revision}'
-    reply = simur.run_process(command, True, extra_dir=None, as_text=False)
+    reply, exit_code = simur.run_process(command, True, extra_dir=None,
+        as_text=False)
 
     return reply
 
@@ -30,7 +31,8 @@ def handle_local_git(reporoot, revision):
     curr_dir = os.getcwd()
     os.chdir(reporoot)
     command = f'git show {revision}'
-    reply = simur.run_process(command, True, extra_dir=reporoot, as_text=False)
+    reply, exit_code = simur.run_process(command, True, extra_dir=reporoot,
+        as_text=False)
     os.chdir(curr_dir)
 
     return reply
@@ -49,7 +51,8 @@ def handle_remote_git(reporoot, revision):
         curr_dir = os.getcwd()
         os.chdir(git_dir)
         command = f'git show {revision}'
-        reply = simur.run_process(command, True, extra_dir=git_dir, as_text=False)
+        reply, exit_code = simur.run_process(command, True, extra_dir=git_dir,
+            as_text=False)
         os.chdir(curr_dir)
 
     return reply

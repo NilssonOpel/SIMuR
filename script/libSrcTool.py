@@ -91,7 +91,7 @@ def get_lib_source_files(pdb_file, cvdump, srcsrv):
         print(f'{pdb_file} is not a lib-PDB file - skipped')
         return []
     commando = f'{cvdump} {pdb_file}'
-    raw_data = simur.run_process(commando, True)
+    raw_data, exit_code = simur.run_process(commando, True)
 
     files = process_raw_cvdump_data(raw_data)
     return files

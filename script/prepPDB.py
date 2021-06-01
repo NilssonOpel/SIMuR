@@ -63,7 +63,7 @@ def is_indexed(root, srcsrv):
     # - if there is a stream then it is indexed
     commando = f'{pdbstr} -r -p:{root} -s:srcsrv'
     # Looks like pdbstr return -1 if not indexed, and 0 if indexed (?)
-    reply = simur.run_process(commando, False)
+    reply, exit_code = simur.run_process(commando, False)
 
     # I will look at an empty reply as a test
     if len(reply) == 0:
@@ -78,7 +78,7 @@ def get_non_indexed(root, srcsrv, vcs_cache):
     srctool = os.path.join(srcsrv, 'srctool.exe')
     commando = f'{srctool} -r {root}'
     # srctool returns the number of files - not an exit code
-    filestring = simur.run_process(commando, False)
+    filestring, exit_code = simur.run_process(commando, False)
     all_files = filestring.splitlines()
     files = []
     for file in all_files:
@@ -122,7 +122,7 @@ def is_in_svn(file, data, svn_cache):
     if debug_level > 4:
         print(f'svn-caching: {svn_dir} - {file}')
     commando = f'svn info -R'
-    reply = simur.run_process(commando, True)
+    reply, exit_code = simur.run_process(commando, True)
     if len(reply) < 2:
         if debug_level > 4:
             print(f'svn info returned: {reply}')
@@ -247,13 +247,13 @@ def is_in_svn_raw(file, data, dummy):
     os.chdir(svn_dir)
 
     commando = 'svn info --show-item url .'
-    reply = simur.run_process(commando, True)
+    reply, exit_code = simur.run_process(commando, True)
     reporoot = reply.strip()
     disk_rel = os.path.relpath(file)
     url_rel  = disk_rel.replace('\\', '/')
 
     commando = f'svn info "{file}"'
-    reply = simur.run_process(commando, True)
+    reply, exit_code = simur.run_process(commando, True)
     if len(reply) < 2:
         print(f'svn info returned: {reply}')
         os.chdir(curr_dir)
@@ -362,7 +362,7 @@ def is_in_git(file, data, git_cache):
     #Look for remote:s
     commando = 'git remote -v'
     git_remote = None
-    reply = simur.run_process(commando, True)
+    reply, exit_code = simur.run_process(commando, True)
     lines = reply.splitlines()
     for line in lines:
         remote = re.match(r'^origin\s*(.+)\s+\(fetch\)$', line)
@@ -375,7 +375,7 @@ def is_in_git(file, data, git_cache):
 
     # Get the contents of the repository
     commando = 'git ls-files -s'
-    reply = simur.run_process(commando, True)
+    reply, exit_code = simur.run_process(commando, True)
     if len(reply) == 0:
         os.chdir(curr_dir)
         return False
@@ -444,7 +444,7 @@ def is_in_git_raw(file, data, dummy):
     os.chdir(git_dir)
 
     commando = f'git ls-files -s "{file}"'
-    reply = simur.run_process(commando, False)  # False since git may complain
+    reply, exit_code = simur.run_process(commando, False)  # git may complain
     if len(reply) == 0:                         # if it is not a repo
         os.chdir(curr_dir)
         return False
@@ -472,7 +472,7 @@ def is_in_git_raw(file, data, dummy):
 
     #Look for remote:s
     commando = 'git remote -v'
-    reply = simur.run_process(commando, True)
+    reply, exit_code = simur.run_process(commando, True)
     lines = reply.splitlines()
     for line in lines:
         remote = re.match(r'^origin\s*(.+)\s+\(fetch\)$', line)
