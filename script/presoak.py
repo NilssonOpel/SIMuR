@@ -1,8 +1,11 @@
+#!/usr/bin/env python3
+#
+#----------------------------------------------------------------------
+
 import os
 import sys
 
 import simur
-
 
 #-------------------------------------------------------------------------------
 #
@@ -12,13 +15,14 @@ def usage():
     print(f'usage: {the_script}')
     print( '    update the cache in SIMUR_REPO_CACHE')
 
-
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
 def main():
-    # Update the all the current repos off-line.  It can be tedious if vcget
-    # should do all the clone:ing and pull:ing while a debugger is running
+    '''
+    Update the all the current repos off-line.  It can be tedious if vcget
+    should do all the clone:ing and pull:ing while a debugger is running
+    '''
     presoak_file = simur.get_presoak_file()
     if not os.path.exists(presoak_file):
         print(f'No presoak file found ({presoak_file})')
@@ -45,7 +49,6 @@ def main():
         print(f'  Updated, git dir {git_dir}')
 
     return 0
-
 
 #-------------------------------------------------------------------------------
 #

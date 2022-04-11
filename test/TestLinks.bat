@@ -52,8 +52,8 @@ move %ROOT% hidden_%ROOT%
 :: Provoke the crash
 ::%BUILD_DIR%\%CONFIG%\TestGitCat.exe
 %SRCSRV%\srctool.exe -c %BUILD_DIR%\%CONFIG%\TestGitCat.pdb
-if %ERRORLEVEL% EQU 8 goto NORMAL
-echo Wrong no of indexed files - should be 8 but is %ERRORLEVEL%
+if %ERRORLEVEL% EQU 10 goto NORMAL
+echo Wrong no of indexed files - should be 10 but is %ERRORLEVEL%
 
 :FAIL
 echo Failed!

@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+#
+#-------------------------------------------------------------------------------
+
 import hashlib
 import json
 import os
@@ -9,6 +13,8 @@ try:
 except ModuleNotFoundError:
     got_win32api = False
 
+VCS_CACHE_FILE_NAME = 'vcs_cache.simur.json'
+VCS_CACHE_PATTERN = '.simur.json'
 
 #-------------------------------------------------------------------------------
 #
@@ -32,7 +38,6 @@ def ccp():
 def run_process(command, do_check, extra_dir=os.getcwd(), as_text=True):
     exit_code = 0
     try:
-        my_command = command
         encoding_used = None
         if as_text:
             encoding_used = ccp()
@@ -243,16 +248,20 @@ def getFileProperties(fname):
                                fixedInfo['FileVersionLS'] % 65536
                            )
 
-        # \VarFileInfo\Translation returns list of available (language, codepage)
-        # pairs that can be used to retreive string info. We are using only the first pair.
-        lang, codepage = win32api.GetFileVersionInfo(fname, '\\VarFileInfo\\Translation')[0]
+        # \VarFileInfo\Translation returns list of available
+        # (language, codepage) pairs that can be used to retrieve string info.
+        # We are using only the first pair.
+        lang, codepage = win32api.GetFileVersionInfo(fname,
+            '\\VarFileInfo\\Translation')[0]
 
-        # any other must be of the form \StringfileInfo\%04X%04X\parm_name, middle
-        # two are language/codepage pair returned from above
+        # any other must be of the form \StringfileInfo\%04X%04X\parm_name,
+        # middle two are language/codepage pair returned from above
 
         strInfo = {}
         for propName in propNames:
-            strInfoPath = u'\\StringFileInfo\\%04X%04X\\%s' % (lang, codepage, propName)
+            strInfoPath = u'\\StringFileInfo\\%04X%04X\\%s' % (lang,
+                codepage,
+                propName)
             # print str_info
             strInfo[propName] = win32api.GetFileVersionInfo(fname, strInfoPath)
 

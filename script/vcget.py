@@ -1,7 +1,11 @@
+#!/usr/bin/env python3
+#
+#-------------------------------------------------------------------------------
+
 import os
-import simur
 import sys
 
+import simur
 
 #-------------------------------------------------------------------------------
 #
@@ -17,8 +21,14 @@ def usage():
 def handle_svn(reporoot, relpath, revision):
     url = reporoot + '/' + relpath
     command = f'svn cat {url}@{revision}'
-    reply, exit_code = simur.run_process(command, True, extra_dir=None,
+    reply, _exit_code = simur.run_process(command, True, extra_dir=None,
         as_text=False)
+
+    # Try to work around any http - https redirecting
+    if reply.startswith(b'Redirecting to URL'):
+        temp = bytearray(reply)
+        slicer = temp.index(b'\r\n') + 2
+        reply = temp[slicer:]
 
     return reply
 
@@ -31,7 +41,7 @@ def handle_local_git(reporoot, revision):
     curr_dir = os.getcwd()
     os.chdir(reporoot)
     command = f'git show {revision}'
-    reply, exit_code = simur.run_process(command, True, extra_dir=reporoot,
+    reply, _exit_code = simur.run_process(command, True, extra_dir=reporoot,
         as_text=False)
     os.chdir(curr_dir)
 
@@ -51,7 +61,7 @@ def handle_remote_git(reporoot, revision):
         curr_dir = os.getcwd()
         os.chdir(git_dir)
         command = f'git show {revision}'
-        reply, exit_code = simur.run_process(command, True, extra_dir=git_dir,
+        reply, _exit_code = simur.run_process(command, True, extra_dir=git_dir,
             as_text=False)
         os.chdir(curr_dir)
 

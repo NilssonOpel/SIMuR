@@ -1,8 +1,12 @@
+#!/usr/bin/env python3
+#
+#-------------------------------------------------------------------------------
+
 import os
-import prepPDB
-import simur
 import sys
 
+import prepPDB
+import simur
 
 #-------------------------------------------------------------------------------
 #
@@ -13,7 +17,6 @@ def usage():
     print(f'  e.g. {the_script} RelWithDebInfo')
     print( '    update the cache in pdb-dir')
 
-
 #-------------------------------------------------------------------------------
 #
 #-------------------------------------------------------------------------------
@@ -21,10 +24,10 @@ def main():
     if len(sys.argv) < 2:
         print("Too few arguments")
         usage()
-        exit(3)
+        sys.exit(3)
     root = sys.argv[1]
 
-    cache_file = os.path.join(root, 'vcs_cache.json')
+    cache_file = os.path.join(root, simur.VCS_CACHE_FILE_NAME)
     if not os.path.exists(cache_file):
         print(f'No cache file found, \'{cache_file}\' expected')
         return 3
@@ -33,7 +36,6 @@ def main():
     simur.store_json_data(cache_file, vcs_cache)
 
     return 0
-
 
 #-------------------------------------------------------------------------------
 #
