@@ -40,6 +40,9 @@ For Subversion, SIMuR do not populate the SIMUR_REPO_CACHE, it will use
 - Test on your own sources
 > processPDBs.py 'dir-with-pdbs' 'srcsrv-dir'
 
+or better yet, use indexPDBs.py directly
+> indexPDBs.py -h
+
 **Now the .pdb files should contain instructions how to fetch the correct source
 files, which you can see by running**
 
