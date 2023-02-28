@@ -57,7 +57,8 @@ copy CMakeLib.txt %LIB_ROOT%\CMakeLists.txt
 cmake %LIB_ROOT%\CMakelists.txt -B %BUILD_LIB_DIR%
 cmake --build %BUILD_LIB_DIR% --config %CONFIG%
 
-python ..\script\processPDBs.py %BUILD_LIB_DIR%\%CONFIG%\
+::python ..\script\processPDBs.py %BUILD_LIB_DIR%\%CONFIG%\
+python ..\script\indexPDBs.py -t %BUILD_LIB_DIR%\%CONFIG%\
 if ERRORLEVEL 1 goto FAIL
 
 :: Hide the lib sources
@@ -72,7 +73,7 @@ cmake --build %BUILD_DIR% --config %CONFIG%
 
 :: Source index the .pdb
 ::python ..\script\prepPDB.py %BUILD_DIR%\%CONFIG%\TestGitCat.pdb C:\WinKits\10\Debuggers\x64\srcsrv
-python ..\script\processPDBs.py %BUILD_DIR%\%CONFIG%\
+python ..\script\indexPDBs.py -t %BUILD_DIR%\%CONFIG%\
 if ERRORLEVEL 1 goto FAIL
 :: Invalidate the source path
 move %ROOT% hidden_%ROOT%
@@ -82,7 +83,8 @@ move %ROOT% hidden_%ROOT%
 goto NORMAL
 
 :FAIL
-echo Failed!
+@echo Failed!
 goto :EOF
 :NORMAL
-echo Success!
+@echo Success!
+@echo Run clean.bat to get rid of cruft (unless you want to debug something)

@@ -44,7 +44,8 @@ cmake --build %BUILD_DIR% --config %CONFIG%
 
 :: Source index the .pdb
 ::python ..\script\prepPDB.py %BUILD_DIR%\%CONFIG%\TestGitCat.pdb C:\WinKits\10\Debuggers\x64\srcsrv
-python ..\script\processPDBs.py %BUILD_DIR%\%CONFIG%\
+::python ..\script\processPDBs.py %BUILD_DIR%\%CONFIG%\
+python ..\script\indexPDBs.py -t %BUILD_DIR%\%CONFIG%\ -u %BUILD_DIR%\%CONFIG%\TestGitCat.pdb
 if ERRORLEVEL 1 goto FAIL
 :: Invalidate the source path
 move %ROOT% hidden_%ROOT%
@@ -59,5 +60,6 @@ echo Wrong no of indexed files - should be 10 but is %ERRORLEVEL%
 echo Failed!
 goto :EOF
 :NORMAL
-echo Success!
-echo To provoke a crash, execute "%BUILD_DIR%\%CONFIG%\TestGitCat.exe"
+@echo Success!
+@echo To provoke a crash, execute "%BUILD_DIR%\%CONFIG%\TestGitCat.exe"
+@echo Run clean.bat to get rid of cruft (unless you want to debug something)
