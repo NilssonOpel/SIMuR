@@ -391,6 +391,11 @@ def is_in_git(file, data, git_cache, options):
     if git_remote is None:
         print(f'Warning: {git_dir} has no remote')
 
+    # Get the commit-sha
+    commando = 'git log -1 --format=%H'
+    reply, _exit_code = simur.run_process(commando, True)
+    commit_id = reply
+
     # Get the contents of the repository
     commando = 'git ls-files -s'
     reply, _exit_code = simur.run_process(commando, True)
@@ -427,7 +432,7 @@ def is_in_git(file, data, git_cache, options):
             cache_entry['reporoot'] = git_remote
             cache_entry['relpath']  = rel_key
             cache_entry['revision'] = revision
-            cache_entry['sha1']     = revision
+            cache_entry['sha1']     = commit_id
             cache_entry['local']    = git_dir
             cache_entry['remote']   = git_remote
             cache_entry['vcs']      = 'git'
@@ -601,7 +606,7 @@ def init_the_stream_text(vcs_information):
 
     # variables
     stream.append('SRCSRV: variables -----------------------------------------')
-    # How to buid the target path for the extracted file
+    # How to build the target path for the extracted file
     stream.append('SRCSRVTRG=%vcget_target%')
     # How to build the command to extract file from source control
     stream.append('SRCSRVCMD=%vcget_command%')
@@ -620,7 +625,7 @@ def init_the_stream_text(vcs_information):
     #  VAR2 VAR3       VAR4      VAR5     VAR6
     # 'svn'*<reporoot>*<relpath>*revision*sha1
     # 'git'*<reporoot>*<relpath>*revision*sha1
-    # for git revision and sha1 is the same
+    # for git sha1 is the commit ID
     stream.append('SRCSRV: source files --------------------------------------')
     for file in vcs_information:
         what = vcs_information[file]
@@ -899,7 +904,7 @@ def prep_lib_pdb(the_pdb_file, srcsrv, cvdump, vcs_cache, vcs_imports,
     return 0
 
 #-------------------------------------------------------------------------------
-#zorro
+#
 #-------------------------------------------------------------------------------
 def extract_repo_roots(the_cache):
     roots = []
